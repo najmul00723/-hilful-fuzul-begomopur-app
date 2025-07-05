@@ -15,6 +15,11 @@
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- jsPDF and xlsx Libraries for Downloading -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
@@ -91,7 +96,7 @@
 
     <!-- Watermark Logo -->
     <div class="watermark">
-        <img src="https://i.ibb.co/YBt8qf4x/hilful-fiul-logo-final-2005-001-F.png" alt="হিলফুল ফুজুল যুব সংঘ বেগমপুর লোগো" class="w-64 h-64 sm:w-96 sm:h-96 object-contain">
+        <img src="https://i.ibb.co/YBt8qf4x/hilful-fiul-logo-final-2005-001-F.png" alt="হিলফুল ফুজুল যুব সংঘ বেগমপুর লোগো" class="w-80 h-80 sm:w-96 sm:h-96 object-contain">
     </div>
 
     <!-- Main Container -->
@@ -112,10 +117,12 @@
             </div>
             <!-- Navigation Tabs -->
             <nav class="bg-card-light">
-                <div class="container mx-auto px-2 sm:px-4 flex justify-center space-x-2 sm:space-x-8">
+                <div class="container mx-auto px-2 sm:px-4 flex justify-center flex-wrap space-x-2 sm:space-x-6">
                     <button data-tab="dashboard" class="main-nav-tab nav-tab py-3 px-2 md:px-4 text-sm sm:text-base text-gray-300 hover:text-white active">ড্যাশবোর্ড</button>
                     <button data-tab="fund" class="main-nav-tab nav-tab py-3 px-2 md:px-4 text-sm sm:text-base text-gray-300 hover:text-white">তহবিল</button>
                     <button data-tab="donor" class="main-nav-tab nav-tab py-3 px-2 md:px-4 text-sm sm:text-base text-gray-300 hover:text-white">রক্তদাতা</button>
+                    <button data-tab="download" class="main-nav-tab nav-tab py-3 px-2 md:px-4 text-sm sm:text-base text-gray-300 hover:text-white">তথ্য ডাউনলোড</button>
+                    <button data-tab="admin" class="main-nav-tab nav-tab py-3 px-2 md:px-4 text-sm sm:text-base text-gray-300 hover:text-white admin-only" style="display: none;">অ্যাডমিন</button>
                 </div>
             </nav>
         </header>
@@ -162,15 +169,16 @@
             <!-- Fund Page -->
             <div id="fund-page" class="tab-content hidden">
                 <div class="flex justify-center border-b border-gray-700 mb-6">
-                    <button data-subtab="income" class="fund-subtab nav-tab py-2 px-4 sm:px-6 text-sm sm:text-base active"> দাতাগণের তালিকা (আয়)</button>
+                    <button data-subtab="all-contributors" class="fund-subtab nav-tab py-2 px-4 sm:px-6 text-sm sm:text-base active">সকল দাতা</button>
+                    <button data-subtab="events" class="fund-subtab nav-tab py-2 px-4 sm:px-6 text-sm sm:text-base">ইভেন্ট</button>
                     <button data-subtab="expense" class="fund-subtab nav-tab py-2 px-4 sm:px-6 text-sm sm:text-base">ব্যয়ের খাতা</button>
                 </div>
-                <div id="income-subpage" class="fund-subcontent active-subcontent">
+                
+                <div id="all-contributors-subpage" class="fund-subcontent active-subcontent">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
                         <h2 class="text-2xl font-bold">সকল আর্থিক দাতার তালিকা</h2>
                         <button id="add-contributor-btn" class="admin-only bg-accent text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-amber-600 w-full sm:w-auto"><i data-lucide="plus-circle" class="w-5 h-5"></i> নতুন দাতা</button>
                     </div>
-                    
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                         <div class="relative w-full sm:max-w-sm">
                             <input type="text" id="contributor-search-input" class="w-full bg-card-light p-3 pl-10 rounded-lg border-2 border-transparent focus:border-accent focus:outline-none" placeholder="দাতা খুঁজুন (নাম, ঠিকানা)...">
@@ -178,12 +186,26 @@
                         </div>
                         <div id="contributor-counter" class="text-right text-gray-400 font-semibold w-full sm:w-auto">মোট দাতা: ০ জন</div>
                     </div>
-
                     <div id="contributors-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
+
+                <div id="events-subpage" class="fund-subcontent">
+                    <div id="events-list-view">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                            <h2 class="text-2xl font-bold">সকল ইভেন্ট</h2>
+                            <button id="add-event-btn" class="admin-only bg-accent text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-amber-600 w-full sm:w-auto"><i data-lucide="calendar-plus" class="w-5 h-5"></i> নতুন ইভেন্ট</button>
+                        </div>
+                        <div id="events-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                    </div>
+                    <div id="event-details-view" class="hidden"></div>
+                </div>
+
                 <div id="expense-subpage" class="fund-subcontent">
-                    <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">সকল ব্যয়ের হিসাব</h2><button id="add-expense-btn" class="admin-only bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-700"><i data-lucide="minus-circle" class="w-5 h-5"></i> নতুন ব্যয়</button></div>
-                    <div class="bg-card rounded-lg shadow overflow-x-auto"><table class="w-full text-left min-w-max"><thead class="bg-card-light"><tr><th class="p-4">তারিখ</th><th class="p-4">বিবরণ</th><th class="p-4 text-right">টাকার পরিমাণ</th><th class="p-4 text-center admin-only" style="display: none;">অ্যাকশন</th></tr></thead><tbody id="expenses-table-body"></tbody></table></div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold">সকল ব্যয়ের হিসাব</h2>
+                        <button id="add-expense-btn" class="admin-only bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-700"><i data-lucide="minus-circle" class="w-5 h-5"></i> নতুন ব্যয়</button>
+                    </div>
+                    <div id="expenses-list-container" class="space-y-4"></div>
                 </div>
             </div>
 
@@ -197,7 +219,7 @@
                     </div>
                 </div>
                 <div class="bg-card p-6 rounded-lg shadow-lg text-center mb-6">
-                    <h2 class="text-xl sm:text-2xl font-bold accent-color mb-3">রক্ত দিয়ে জীবন বাঁচান, রক্তদাতা হতে আপনার তথ্য দিন</h2>
+                    <h2 class="text-xl sm:text-2xl font-bold accent-color mb-3">রক্ত দিয়ে জীবন বাঁচান, রক্তদাতা হতে চাইলে আপনার তথ্যসহ পেজে</h2>
                     <div class="flex flex-wrap justify-center items-center gap-3 mt-2">
                         <a href="https://www.facebook.com/profile.php?id=61577696172569" target="_blank" class="inline-flex items-center justify-center bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-5 h-5 mr-2 fill-current"><path d="M256.6 8C116.5 8 8 110.3 8 248.6c0 72.3 29.7 134.8 78.1 177.9 8.4 7.5 6.6 11.9 8.1 58.2A19.9 19.9 0 0 0 122 502.3c52.9-23.3 53.6-25.1 62.6-22.7C337.9 521.8 504 423.7 504 248.6 504 110.3 396.6 8 256.6 8zm149.2 185.1l-73 115.6a37.4 37.4 0 0 1 -53.9 9.9l-58.1-43.5a15 15 0 0 0 -18 0l-78.4 59.4c-10.5 7.9-24.2-4.6-17.1-15.7l73-115.6a37.4 37.4 0 0 1 53.9-9.9l58.1 43.5a15 15 0 0 0 18 0l78.4-59.4c10.4-8 24.1 4.5 17.1 15.6z"/></svg>
@@ -223,6 +245,56 @@
                 </div>
                 <div id="blood-donors-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
             </div>
+
+            <!-- Download Page -->
+            <div id="download-page" class="tab-content hidden">
+                <div class="bg-card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-2xl font-bold accent-color mb-4">মাসিক রিপোর্ট ডাউনলোড</h2>
+                    <p class="text-gray-400 mb-6">নির্দিষ্ট মাস এবং বছরের আয়-ব্যয়ের হিসাব ডাউনলোড করুন।</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label for="report-month" class="block mb-2 text-sm font-medium text-gray-300">মাস নির্বাচন করুন</label>
+                            <select id="report-month" class="bg-card-light border border-gray-600 text-white text-sm rounded-lg focus:ring-accent focus:border-accent block w-full p-2.5"></select>
+                        </div>
+                        <div>
+                            <label for="report-year" class="block mb-2 text-sm font-medium text-gray-300">বছর নির্বাচন করুন</label>
+                            <select id="report-year" class="bg-card-light border border-gray-600 text-white text-sm rounded-lg focus:ring-accent focus:border-accent block w-full p-2.5"></select>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap justify-center items-center gap-3 mt-4">
+                        <button id="download-txt-btn" class="inline-flex items-center justify-center bg-gray-600 text-white px-5 py-2.5 rounded-lg hover:bg-gray-700 transition-colors">
+                            <i data-lucide="file-text" class="w-5 h-5 mr-2"></i> TXT ডাউনলোড
+                        </button>
+                        <button id="download-xlsx-btn" class="inline-flex items-center justify-center bg-green-600 text-white px-5 py-2.5 rounded-lg hover:bg-green-700 transition-colors">
+                           <i data-lucide="file-spreadsheet" class="w-5 h-5 mr-2"></i> Excel ডাউনলোড
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Page -->
+            <div id="admin-page" class="tab-content hidden">
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Export Card -->
+                    <div class="bg-card p-6 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-bold accent-color mb-4">ডেটা এক্সপোর্ট</h2>
+                        <p class="text-gray-400 mb-6">সম্পূর্ণ অ্যাপ্লিকেশনের ডেটা একটি JSON ফাইলে ডাউনলোড করুন। এটি একটি ব্যাকআপ হিসেবে কাজ করবে।</p>
+                        <button id="export-data-btn" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                            <i data-lucide="download-cloud" class="w-5 h-5"></i> সকল ডেটা এক্সপোর্ট করুন
+                        </button>
+                    </div>
+                    <!-- Import Card -->
+                    <div class="bg-card p-6 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-bold accent-color mb-4">ডেটা ইমপোর্ট</h2>
+                        <p class="text-gray-400 mb-6">JSON ব্যাকআপ ফাইল থেকে ডেটা ইমপোর্ট করুন। <strong class="text-red-500">সতর্কতা: এটি বর্তমান ডেটা মুছে নতুন ডেটা যোগ করবে।</strong></p>
+                        <input type="file" id="import-file-input" class="hidden" accept=".json">
+                        <button id="import-data-btn" class="w-full bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2">
+                            <i data-lucide="upload-cloud" class="w-5 h-5"></i> ফাইল ইমপোর্ট করুন
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </main>
         
         <!-- Footer -->
@@ -261,6 +333,8 @@
         let isAdmin = false;
         let allBloodDonors = [];
         let allContributors = [];
+        let allEvents = [];
+        let detailedExpenses = [];
 
         // --- UTILS ---
         const showToast = (message, isError = false) => {
@@ -285,9 +359,10 @@
 
         const createModal = (title, content, footer) => {
             const modalContainer = document.getElementById('modals-container');
-            if (!modalContainer) return;
+            if (!modalContainer) return null;
             modalContainer.innerHTML = `<div class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-card w-full max-w-lg p-6 rounded-lg shadow-xl relative max-h-screen overflow-y-auto"><h2 class="text-2xl font-bold mb-4 accent-color">${title}</h2><div class="modal-body text-gray-300">${content}</div><div class="modal-footer mt-6 flex justify-end gap-3">${footer || ''}</div><button onclick="window.closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button></div></div>`;
             lucide.createIcons();
+            return modalContainer.querySelector('.modal-backdrop');
         };
 
         const showConfirmModal = (title, message, onConfirm) => {
@@ -318,14 +393,17 @@
                     authButton.textContent = 'অ্যাডমিন লগইন';
                     authButton.onclick = showLoginModal;
                 }
-
                 loadAllData();
             });
+            populateDateFilters();
         };
 
         const updateUIVisibility = () => {
             document.querySelectorAll('.admin-only').forEach(el => {
                 el.style.display = isAdmin ? '' : 'none';
+            });
+            document.querySelectorAll('.non-admin-only').forEach(el => {
+                el.style.display = isAdmin ? 'none' : '';
             });
             const editBikashContainer = document.getElementById('edit-bkash-container');
             if(editBikashContainer) {
@@ -356,6 +434,7 @@
             loadExpenses();
             loadBloodDonors();
             loadBikashNumber();
+            loadEvents();
         };
         
         const loadBikashNumber = () => {
@@ -453,26 +532,35 @@
         const loadExpenses = () => {
             const q = query(collection(db, "expenses"), orderBy("date", "desc"));
             onSnapshot(q, (snapshot) => {
-                const tableBody = document.getElementById('expenses-table-body');
-                if(!tableBody) return;
-                if (snapshot.empty) { tableBody.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-gray-400">কোনো ব্যয়ের হিসাব পাওয়া যায়নি।</td></tr>`; return; }
-                tableBody.innerHTML = '';
+                const expenseContainer = document.getElementById('expenses-list-container');
+                if(!expenseContainer) return;
+                if (snapshot.empty) { 
+                    expenseContainer.innerHTML = `<p class="text-center p-4 text-gray-400">কোনো ব্যয়ের হিসাব পাওয়া যায়নি।</p>`; 
+                    return; 
+                }
+                expenseContainer.innerHTML = '';
                 snapshot.forEach(doc => {
                     const expense = { id: doc.id, ...doc.data() };
-                    const row = document.createElement('tr');
-                    row.className = 'border-b border-gray-700 hover:bg-card-light';
-                    // Add phone icon logic here
-                    const phoneIconHTML = (expense.phone && isAdmin)
-                        ? `<a href="tel:${expense.phone}" class="text-accent hover:text-amber-400 ml-2 inline-block admin-only"><i data-lucide="phone" class="w-4 h-4"></i></a>`
-                        : '';
-                    row.innerHTML = `
-                        <td class="p-4">${formatDate(expense.date)}</td>
-                        <td class="p-4">${expense.description} ${phoneIconHTML}</td>
-                        <td class="p-4 text-right">${formatCurrency(expense.amount)}</td>
-                        <td class="p-4 text-center admin-only" style="display: none;">
-                            <button class="text-red-500 hover:text-red-400" onclick="window.deleteExpense('${expense.id}')"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
-                        </td>`;
-                    tableBody.appendChild(row);
+                    const card = document.createElement('div');
+                    card.className = 'bg-card-light p-4 rounded-lg shadow-md hover:shadow-lg hover:border-accent border border-transparent transition-all cursor-pointer';
+                    card.onclick = () => window.viewExpenseDetails(expense.id);
+                    
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <div class="flex-grow pr-4">
+                                <p class="font-bold text-lg text-gray-200">${expense.description}</p>
+                                <p class="text-sm text-gray-400">${formatDate(expense.date)}</p>
+                            </div>
+                            <div class="flex items-center flex-shrink-0">
+                                <p class="text-xl font-bold text-red-500 mr-4">${formatCurrency(expense.amount)}</p>
+                                <button class="admin-only text-red-500 hover:text-red-400 p-1" onclick="event.stopPropagation(); window.deleteExpense('${expense.id}')">
+                                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2 non-admin-only" style="display: none;">বিস্তারিত দেখতে ক্লিক করুন</p>
+                    `;
+                    expenseContainer.appendChild(card);
                 });
                 lucide.createIcons();
                 updateUIVisibility();
@@ -574,7 +662,7 @@
                 if (sortedMonths.length === 0) { tableHTML += `<tr><td colspan="2" class="text-center p-4">কোনো অনুদান নেই।</td></tr>`; }
                 else { sortedMonths.forEach(key => {
                         const data = monthlyData[key];
-                        tableHTML += `<tr><td class="p-2">${data.month}, ${new Intl.NumberFormat('bn-BD').format(data.year)}</td><td class="p-2 text-right">${formatCurrency(data.total)}</td></tr>`;
+                        tableHTML += `<tr><td class="p-2">${data.month}, ${data.year.toLocaleString('bn-BD', { useGrouping: false })}</td><td class="p-2 text-right">${formatCurrency(data.total)}</td></tr>`;
                     });
                 }
                 tableHTML += `</tbody></table>`;
@@ -592,7 +680,7 @@
                 let tableHTML = `<table class="w-full text-left"><thead><tr><th class="p-2">বছর</th><th class="p-2 text-right">মোট পরিমাণ</th></tr></thead><tbody>`;
                 if (sortedYears.length === 0) { tableHTML += `<tr><td colspan="2" class="text-center p-4">কোনো অনুদান নেই।</td></tr>`; }
                 else { sortedYears.forEach(year => {
-                        tableHTML += `<tr><td class="p-2">${new Intl.NumberFormat('bn-BD').format(year)}</td><td class="p-2 text-right">${formatCurrency(yearlyData[year])}</td></tr>`;
+                        tableHTML += `<tr><td class="p-2">${parseInt(year).toLocaleString('bn-BD', { useGrouping: false })}</td><td class="p-2 text-right">${formatCurrency(yearlyData[year])}</td></tr>`;
                     });
                 }
                 tableHTML += `</tbody></table>`;
@@ -622,7 +710,7 @@
 
         const showDonationFormModal = (contributorId, onSaveCallback) => {
             const content = `<form id="donation-form"><div class="mb-4"><label class="block mb-2">পরিমাণ</label><input type="number" id="amount" class="w-full bg-card-light p-3 rounded-lg" required></div><div class="mb-4"><label class="block mb-2">তারিখ</label><input type="date" id="date" class="w-full bg-card-light p-3 rounded-lg" value="${new Date().toISOString().split('T')[0]}" required></div></form>`;
-            const footer = `<button id="save-donation-btn" class="bg-accent text-white px-6 py-2 rounded-lg">সেভ</button>`;
+            const footer = `<button id="save-donation-btn" class="bg-accent text-white px-6 py-2 rounded-lg">সেভ করুন</button>`;
             createModal('নতুন অনুদান', content, footer);
             document.getElementById('save-donation-btn').onclick = async () => {
                 const form = document.getElementById('donation-form');
@@ -638,28 +726,475 @@
         };
 
         const showExpenseFormModal = () => {
-            const content = `<form id="expense-form" class="space-y-4">
-                <input type="text" id="description" placeholder="বিবরণ" class="w-full bg-card-light p-3 rounded-lg" required>
-                <input type="number" id="amount" placeholder="টাকার পরিমাণ" class="w-full bg-card-light p-3 rounded-lg" required>
-                <input type="tel" id="phone" placeholder="ফোন নম্বর (ঐচ্ছিক)" class="w-full bg-card-light p-3 rounded-lg">
-                <input type="date" id="date" class="w-full bg-card-light p-3 rounded-lg" value="${new Date().toISOString().split('T')[0]}" required>
-            </form>`;
+            detailedExpenses = []; // Reset details
+            const content = `
+                <form id="expense-form" class="space-y-4" onsubmit="return false;">
+                    <input type="text" id="description" placeholder="বিবরণ" class="w-full bg-card-light p-3 rounded-lg" required>
+                    <input type="tel" id="phone" placeholder="ফোন নম্বর (ঐচ্ছিক)" class="w-full bg-card-light p-3 rounded-lg">
+                    <input type="date" id="date" class="w-full bg-card-light p-3 rounded-lg" value="${new Date().toISOString().split('T')[0]}" required>
+                    <div class="bg-card-light p-4 rounded-lg">
+                        <h4 class="text-lg font-semibold mb-2">বিস্তারিত ব্যয়</h4>
+                        <div id="detailed-expenses-list" class="space-y-2 mb-3"></div>
+                        <div id="detail-expense-adder" class="flex gap-2">
+                            <input type="text" id="detail-name" placeholder="পণ্যের নাম" class="w-full bg-gray-700 p-2 rounded-lg">
+                            <input type="number" id="detail-price" placeholder="টাকা" class="w-1/3 bg-gray-700 p-2 rounded-lg">
+                            <button type="button" id="add-detail-item-btn" class="bg-blue-600 text-white px-3 rounded-lg flex-shrink-0"><i data-lucide="plus"></i></button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="font-bold">মোট পরিমাণ:</label>
+                        <input type="text" id="total-amount" class="w-full bg-gray-700 p-3 rounded-lg mt-1" value="${formatCurrency(0)}" readonly>
+                    </div>
+                </form>`;
             const footer = `<button id="save-expense-btn" class="bg-accent text-white px-6 py-2 rounded-lg">সেভ করুন</button>`;
-            createModal('নতুন ব্যয়ের হিসাব', content, footer);
-            document.getElementById('save-expense-btn').onclick = async () => {
-                const form = document.getElementById('expense-form');
-                if (!form.checkValidity()) return form.reportValidity();
+            
+            const modal = createModal('নতুন ব্যয়ের হিসাব', content, footer);
+            if (!modal) return;
+
+            const updateDetailedExpensesUI = () => {
+                const listEl = modal.querySelector('#detailed-expenses-list');
+                const totalAmountEl = modal.querySelector('#total-amount');
+                if (!listEl || !totalAmountEl) return;
+
+                let total = 0;
+                listEl.innerHTML = '';
+                detailedExpenses.forEach((item, index) => {
+                    total += item.price;
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'flex justify-between items-center bg-gray-700 p-2 rounded';
+                    itemEl.innerHTML = `
+                        <span>${item.name}</span>
+                        <div class="flex items-center gap-2">
+                            <span>${formatCurrency(item.price)}</span>
+                            <button type="button" class="text-red-500 remove-detail-item-btn" data-index="${index}"><i data-lucide="x-circle" class="w-4 h-4"></i></button>
+                        </div>
+                    `;
+                    listEl.appendChild(itemEl);
+                });
+
+                totalAmountEl.value = formatCurrency(total);
+                lucide.createIcons();
+                
+                modal.querySelectorAll('.remove-detail-item-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const indexToRemove = parseInt(e.currentTarget.dataset.index, 10);
+                        detailedExpenses.splice(indexToRemove, 1);
+                        updateDetailedExpensesUI();
+                    });
+                });
+            };
+
+            const addDetailItemBtn = modal.querySelector('#add-detail-item-btn');
+            const detailNameInput = modal.querySelector('#detail-name');
+            const detailPriceInput = modal.querySelector('#detail-price');
+
+            const addDetailedExpenseItem = () => {
+                const name = detailNameInput.value.trim();
+                const price = Number(detailPriceInput.value);
+                if (name && price > 0) {
+                    detailedExpenses.push({ name, price });
+                    updateDetailedExpensesUI();
+                    detailNameInput.value = '';
+                    detailPriceInput.value = '';
+                    detailNameInput.focus();
+                } else {
+                    showToast('অনুগ্রহ করে পণ্যের নাম এবং সঠিক মূল্য যোগ করুন।', true);
+                }
+            };
+
+            addDetailItemBtn.addEventListener('click', addDetailedExpenseItem);
+            
+            detailPriceInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addDetailedExpenseItem();
+                }
+            });
+            detailNameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addDetailedExpenseItem();
+                }
+            });
+
+
+            const saveBtn = modal.querySelector('#save-expense-btn');
+            saveBtn.addEventListener('click', async () => {
+                const form = modal.querySelector('#expense-form');
+                
+                if (!form.description.value.trim()) {
+                    showToast('অনুগ্রহ করে ব্যয়ের একটি বিবরণ দিন।', true);
+                    form.description.focus();
+                    return;
+                }
+
+                if (detailedExpenses.length === 0) {
+                    showToast('অনুগ্রহ করে কমপক্ষে একটি বিস্তারিত ব্যয় যোগ করুন।', true);
+                    return;
+                }
+                
+                const totalAmount = detailedExpenses.reduce((sum, item) => sum + item.price, 0);
+
                 const data = { 
                     description: form.description.value, 
-                    amount: Number(form.amount.value), 
+                    amount: totalAmount, 
                     date: Timestamp.fromDate(new Date(form.date.value)),
-                    phone: form.phone.value || null // Save phone or null
+                    phone: form.phone.value || null
                 };
+                
                 try {
-                    await addDoc(collection(db, 'expenses'), data);
+                    const expenseDocRef = await addDoc(collection(db, 'expenses'), data);
+                    
+                    const batch = writeBatch(db);
+                    detailedExpenses.forEach(detail => {
+                        const detailDocRef = doc(collection(db, `expenses/${expenseDocRef.id}/details`));
+                        batch.set(detailDocRef, detail);
+                    });
+                    await batch.commit();
+                    
                     showToast('ব্যয়ের হিসাব সেভ হয়েছে!');
                     closeModal();
-                } catch (e) { showToast('সেভ করতে সমস্যা হয়েছে', true); console.error(e) }
+                } catch (e) { 
+                    showToast('সেভ করতে সমস্যা হয়েছে', true); 
+                    console.error("Error saving expense:", e); 
+                }
+            });
+            
+            updateDetailedExpensesUI();
+        };
+
+        window.viewExpenseDetails = async (expenseId) => {
+            const expenseSnap = await getDoc(doc(db, 'expenses', expenseId));
+            if(!expenseSnap.exists()) {
+                showToast("ব্যয়ের হিসাব পাওয়া যায়নি", true);
+                return;
+            }
+            const expense = expenseSnap.data();
+            const detailsSnap = await getDocs(collection(db, `expenses/${expenseId}/details`));
+            const details = detailsSnap.docs.map(d => ({ id: d.id, ...d.data()}));
+
+            let detailsHtml = '<p>কোনো বিস্তারিত বিবরণ নেই।</p>';
+            if (details.length > 0) {
+                detailsHtml = `<table class="w-full text-left mt-2">
+                    <thead class="bg-card-light"><tr><th class="p-2">বিবরণ</th><th class="p-2 text-right">টাকা</th><th class="p-2 text-center admin-only" style="display:none;">অ্যাকশন</th></tr></thead>
+                    <tbody>
+                        ${details.map(d => `<tr>
+                            <td class="p-2 border-t border-gray-700">${d.name}</td>
+                            <td class="p-2 border-t border-gray-700 text-right">${formatCurrency(d.price)}</td>
+                            <td class="p-2 border-t border-gray-700 text-center admin-only" style="display:none;">
+                                <button class="text-blue-400 hover:text-blue-300 mr-2" onclick="window.editExpenseDetail('${expenseId}', '${d.id}')"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                                <button class="text-red-500 hover:text-red-400" onclick="window.deleteExpenseDetail('${expenseId}', '${d.id}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>`;
+            }
+
+            const content = `
+                <div class="space-y-2">
+                    <p><strong>বিবরণ:</strong> ${expense.description}</p>
+                    <p><strong>তারিখ:</strong> ${formatDate(expense.date)}</p>
+                    <p><strong>মোট ব্যয়:</strong> ${formatCurrency(expense.amount)}</p>
+                    ${expense.phone ? `<p><strong>ফোন:</strong> ${expense.phone}</p>` : ''}
+                    <hr class="border-gray-600 my-2">
+                    <h4 class="font-bold text-lg">বিস্তারিত</h4>
+                    <div class="max-h-60 overflow-y-auto">${detailsHtml}</div>
+                </div>
+            `;
+            createModal('বিস্তারিত খরচের ইতিহাস', content, '');
+            lucide.createIcons();
+            updateUIVisibility();
+        };
+
+        window.editExpenseDetail = async (expenseId, detailId) => {
+            const detailSnap = await getDoc(doc(db, `expenses/${expenseId}/details`, detailId));
+            if (!detailSnap.exists()) {
+                showToast('বিবরণটি পাওয়া যায়নি।', true);
+                return;
+            }
+            const detail = detailSnap.data();
+
+            const content = `<form id="edit-detail-form" class="space-y-4">
+                <input type="text" id="edit-detail-name" placeholder="পণ্যের নাম" class="w-full bg-card-light p-3 rounded-lg" value="${detail.name}" required>
+                <input type="number" id="edit-detail-price" placeholder="টাকা" class="w-full bg-card-light p-3 rounded-lg" value="${detail.price}" required>
+            </form>`;
+            const footer = `<button id="save-edited-detail-btn" class="bg-accent text-white px-6 py-2 rounded-lg">সেভ করুন</button>`;
+
+            createModal('ব্যয়ের বিবরণ এডিট', content, footer);
+
+            document.getElementById('save-edited-detail-btn').onclick = async () => {
+                const newName = document.getElementById('edit-detail-name').value.trim();
+                const newPrice = Number(document.getElementById('edit-detail-price').value);
+
+                if (!newName || newPrice <= 0) {
+                    showToast('সঠিক নাম এবং মূল্য দিন।', true);
+                    return;
+                }
+
+                try {
+                    // Update the detail document
+                    await updateDoc(doc(db, `expenses/${expenseId}/details`, detailId), { name: newName, price: newPrice });
+
+                    // Recalculate total expense
+                    const detailsCollectionRef = collection(db, `expenses/${expenseId}/details`);
+                    const allDetailsSnap = await getDocs(detailsCollectionRef);
+                    const newTotalAmount = allDetailsSnap.docs.reduce((sum, doc) => sum + doc.data().price, 0);
+                    
+                    // Update the main expense document
+                    await updateDoc(doc(db, 'expenses', expenseId), { amount: newTotalAmount });
+
+                    showToast('বিবরণ আপডেট হয়েছে!');
+                    closeModal(); // Close the edit modal
+                    window.viewExpenseDetails(expenseId); // Refresh the main details view
+                } catch (e) {
+                    showToast('আপডেট করতে সমস্যা হয়েছে।', true);
+                    console.error(e);
+                }
+            };
+        };
+
+        window.deleteExpenseDetail = (expenseId, detailId) => {
+            showConfirmModal('নিশ্চিতকরণ', 'আপনি কি এই ব্যয়ের বিবরণটি মুছে ফেলতে চান?', async () => {
+                try {
+                    // Delete the detail document
+                    await deleteDoc(doc(db, `expenses/${expenseId}/details`, detailId));
+
+                    // Recalculate total expense
+                    const detailsCollectionRef = collection(db, `expenses/${expenseId}/details`);
+                    const allDetailsSnap = await getDocs(detailsCollectionRef);
+                    const newTotalAmount = allDetailsSnap.docs.reduce((sum, doc) => sum + doc.data().price, 0);
+
+                    // Update the main expense document
+                    await updateDoc(doc(db, 'expenses', expenseId), { amount: newTotalAmount });
+
+                    showToast('বিবরণ মুছে ফেলা হয়েছে।');
+                    window.viewExpenseDetails(expenseId); // Refresh the main details view
+                } catch (e) {
+                    showToast('মুছে ফেলতে সমস্যা হয়েছে।', true);
+                    console.error(e);
+                }
+            });
+        };
+        
+        // --- EVENT MANAGEMENT ---
+        const loadEvents = () => {
+            const q = query(collection(db, "events"), orderBy("date", "desc"));
+            onSnapshot(q, async (snapshot) => {
+                const eventsWithTotals = await Promise.all(snapshot.docs.map(async (doc) => {
+                    const event = { id: doc.id, ...doc.data() };
+                    const donorsSnapshot = await getDocs(collection(db, `events/${event.id}/donors`));
+                    let totalDonation = 0;
+                    for(const donorDoc of donorsSnapshot.docs) {
+                        const donationsSnapshot = await getDocs(collection(db, `events/${event.id}/donors/${donorDoc.id}/donations`));
+                        totalDonation += donationsSnapshot.docs.reduce((sum, d) => sum + d.data().amount, 0);
+                    }
+                    return { ...event, totalDonation };
+                }));
+                allEvents = eventsWithTotals;
+                renderEvents(allEvents);
+            }, (error) => console.error("Error loading events:", error.message));
+        };
+        
+        const renderEvents = (events) => {
+            const listEl = document.getElementById('events-list');
+            if(!listEl) return;
+            if(events.length === 0) {
+                listEl.innerHTML = `<p class="col-span-full text-center text-gray-400">কোনো ইভেন্ট পাওয়া যায়নি।</p>`;
+                return;
+            }
+            listEl.innerHTML = '';
+            events.forEach(event => {
+                const card = document.createElement('div');
+                card.className = 'bg-card p-4 rounded-lg shadow hover:shadow-lg hover:border-accent border border-transparent transition-all cursor-pointer flex flex-col justify-between';
+                card.innerHTML = `
+                    <div>
+                        <h3 class="text-xl font-bold accent-color">${event.name}</h3>
+                        <p class="text-gray-400 text-sm">${formatDate(event.date)}</p>
+                    </div>
+                    <p class="mt-3 text-lg font-semibold">মোট অনুদান: ${formatCurrency(event.totalDonation)}</p>
+                `;
+                card.onclick = () => showEventDetailsView(event.id);
+                listEl.appendChild(card);
+            });
+        };
+
+        const showAddEventModal = () => {
+            const content = `<form id="event-form" class="space-y-4">
+                <input type="text" id="eventName" placeholder="ইভেন্টের নাম" class="w-full bg-card-light p-3 rounded-lg" required>
+                <input type="date" id="eventDate" class="w-full bg-card-light p-3 rounded-lg" value="${new Date().toISOString().split('T')[0]}" required>
+            </form>`;
+            const footer = `<button id="save-event-btn" class="bg-accent text-white px-6 py-2 rounded-lg">সেভ করুন</button>`;
+            createModal('নতুন ইভেন্ট', content, footer);
+            document.getElementById('save-event-btn').onclick = async () => {
+                const form = document.getElementById('event-form');
+                if(!form.checkValidity()) return form.reportValidity();
+                const data = {
+                    name: form.eventName.value,
+                    date: Timestamp.fromDate(new Date(form.eventDate.value)),
+                    createdAt: Timestamp.now()
+                };
+                try {
+                    await addDoc(collection(db, 'events'), data);
+                    showToast('নতুন ইভেন্ট যোগ হয়েছে!');
+                    closeModal();
+                } catch (e) {
+                    showToast('সেভ করতে সমস্যা হয়েছে', true);
+                    console.error(e);
+                }
+            };
+        };
+
+        const showEventDetailsView = async (eventId) => {
+            document.getElementById('events-list-view').classList.add('hidden');
+            const detailsView = document.getElementById('event-details-view');
+            const eventSnap = await getDoc(doc(db, 'events', eventId));
+            const eventData = eventSnap.data();
+
+            detailsView.innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold">${eventData.name}</h2>
+                        <p class="text-gray-400">${formatDate(eventData.date)}</p>
+                    </div>
+                    <button id="back-to-events-btn" class="bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"><i data-lucide="arrow-left"></i> ফিরে যান</button>
+                </div>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                    <h3 class="text-xl font-bold">ইভেন্টের দাতা তালিকা</h3>
+                    <button id="add-event-donor-btn" class="admin-only bg-accent text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-amber-600 w-full sm:w-auto"><i data-lucide="plus-circle" class="w-5 h-5"></i> নতুন দাতা</button>
+                </div>
+                <div id="event-donors-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            `;
+            detailsView.classList.remove('hidden');
+            lucide.createIcons();
+            updateUIVisibility();
+
+            document.getElementById('back-to-events-btn').onclick = () => {
+                detailsView.classList.add('hidden');
+                document.getElementById('events-list-view').classList.remove('hidden');
+            };
+            
+            document.getElementById('add-event-donor-btn').onclick = () => showEventDonorFormModal(eventId);
+
+            loadEventDonors(eventId);
+        };
+        
+        const loadEventDonors = (eventId) => {
+             const q = query(collection(db, `events/${eventId}/donors`), orderBy("createdAt", "desc"));
+             onSnapshot(q, async (snapshot) => {
+                const donorsWithTotal = await Promise.all(snapshot.docs.map(async (doc) => {
+                    const donor = { id: doc.id, ...doc.data() };
+                    const donationsSnapshot = await getDocs(collection(db, `events/${eventId}/donors/${donor.id}/donations`));
+                    const totalDonation = donationsSnapshot.docs.reduce((sum, d) => sum + d.data().amount, 0);
+                    return { ...donor, totalDonation };
+                }));
+                renderEventDonors(eventId, donorsWithTotal);
+             });
+        };
+
+        const renderEventDonors = (eventId, donors) => {
+            const listEl = document.getElementById('event-donors-list');
+            if(!listEl) return;
+            if (donors.length === 0) {
+                listEl.innerHTML = `<p class="col-span-full text-center text-gray-400">এই ইভেন্টে কোনো দাতার তথ্য পাওয়া যায়নি।</p>`;
+                return;
+            }
+            listEl.innerHTML = '';
+            donors.forEach(donor => {
+                const card = document.createElement('div');
+                card.className = 'bg-card-light p-4 rounded-lg shadow hover:shadow-lg hover:border-accent border border-transparent transition-all cursor-pointer';
+                card.innerHTML = `<h3 class="text-xl font-bold accent-color">${donor.name}</h3><p class="text-gray-400">${donor.address || ''}</p><p class="mt-2 text-lg font-semibold">মোট অনুদান: ${formatCurrency(donor.totalDonation)}</p>`;
+                card.onclick = () => showEventDonorDetailsModal(eventId, donor.id);
+                listEl.appendChild(card);
+            });
+        };
+
+        const showEventDonorFormModal = async (eventId, donorId = null) => {
+            let existingData = {};
+            if (donorId) {
+                const docSnap = await getDoc(doc(db, `events/${eventId}/donors`, donorId));
+                if (docSnap.exists()) existingData = docSnap.data();
+            }
+            const title = donorId ? 'দাতার তথ্য এডিট' : 'নতুন দাতা যোগ';
+            const content = `<form id="event-donor-form" class="space-y-4">
+                <input type="text" id="name" placeholder="নাম" class="w-full bg-card-light p-3 rounded-lg" value="${existingData.name || ''}" required>
+                <input type="text" id="fatherName" placeholder="পিতার নাম (ঐচ্ছিক)" class="w-full bg-card-light p-3 rounded-lg" value="${existingData.fatherName || ''}">
+                <input type="tel" id="phone" placeholder="ফোন নম্বর (ঐচ্ছিক)" class="w-full bg-card-light p-3 rounded-lg" value="${existingData.phone || ''}">
+                <input type="text" id="address" placeholder="ঠিকানা (ঐচ্ছিক)" class="w-full bg-card-light p-3 rounded-lg" value="${existingData.address || ''}">
+            </form>`;
+            const footer = `<button id="save-event-donor-btn" class="bg-accent text-white px-6 py-2 rounded-lg">সেভ করুন</button>`;
+            createModal(title, content, footer);
+
+            document.getElementById('save-event-donor-btn').onclick = async () => {
+                const form = document.getElementById('event-donor-form');
+                if (!form.checkValidity()) return form.reportValidity();
+                const data = { 
+                    name: form.name.value, 
+                    fatherName: form.fatherName.value, 
+                    address: form.address.value, 
+                    phone: form.phone.value || null,
+                    createdAt: existingData.createdAt || Timestamp.now() 
+                };
+                try {
+                    const collectionRef = collection(db, `events/${eventId}/donors`);
+                    if (donorId) {
+                        await setDoc(doc(collectionRef, donorId), data);
+                        showToast('তথ্য আপডেট হয়েছে!');
+                    } else {
+                        await addDoc(collectionRef, data);
+                        showToast('নতুন দাতা যোগ হয়েছে!');
+                    }
+                    closeModal();
+                } catch (e) { showToast('সেভ করতে সমস্যা হয়েছে', true); console.error(e); }
+            };
+        };
+
+        const showEventDonorDetailsModal = async (eventId, donorId) => {
+             const donorSnap = await getDoc(doc(db, `events/${eventId}/donors`, donorId));
+            const donor = { id: donorSnap.id, ...donorSnap.data() };
+            const donationsSnapshot = await getDocs(query(collection(db, `events/${eventId}/donors/${donor.id}/donations`), orderBy("date", "desc")));
+            const donations = donationsSnapshot.docs.map(d => ({id: d.id, ...d.data()}));
+            
+            let donationsHtml = `<table class="w-full text-left"><thead><tr><th class="p-2">তারিখ</th><th class="p-2 text-right">পরিমাণ</th><th class="p-2 text-center admin-only" style="display: none;"></th></tr></thead><tbody>${donations.map(d => `<tr><td class="p-2">${formatDate(d.date)}</td><td class="p-2 text-right">${formatCurrency(d.amount)}</td><td class="p-2 text-center admin-only" style="display: none;"><button onclick="window.deleteEventDonation('${eventId}', '${donor.id}', '${d.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('') || '<tr><td colspan="3" class="text-center p-4">কোনো অনুদান নেই।</td></tr>'}</tbody></table>`;
+
+            const phoneHTML = donor.phone 
+                ? `<p class="admin-only" style="display: none;"><strong>ফোন:</strong> <a href="tel:${donor.phone}" class="text-accent hover:underline">${donor.phone}</a></p>` 
+                : '';
+
+            let content = `<div class="space-y-2 mb-4">
+                <p><strong>নাম:</strong> ${donor.name}</p>
+                <p><strong>পিতার নাম:</strong> ${donor.fatherName || 'N/A'}</p>
+                <p><strong>ঠিকানা:</strong> ${donor.address || 'N/A'}</p>
+                ${phoneHTML}
+            </div>
+            <div class="admin-only" style="display: none;"><button id="add-new-event-donation-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg mb-4">নতুন অনুদান যোগ</button></div>
+            <h4 class="text-lg font-bold mb-2">অনুদান ইতিহাস</h4>
+            <div class="max-h-60 overflow-y-auto bg-card-light p-2 rounded-lg">${donationsHtml}</div>`;
+            
+            const footer = `<button id="edit-event-donor-btn" class="admin-only bg-blue-600 text-white px-4 py-2 rounded-lg">এডিট</button><button id="delete-event-donor-btn" class="admin-only bg-red-600 text-white px-4 py-2 rounded-lg">ডিলিট</button>`;
+            
+            createModal('দাতার বিস্তারিত', content, footer);
+            lucide.createIcons();
+            updateUIVisibility();
+            
+            document.getElementById('add-new-event-donation-btn').onclick = () => showEventDonationFormModal(eventId, donor.id, () => showEventDonorDetailsModal(eventId, donor.id));
+            document.getElementById('edit-event-donor-btn').onclick = () => showEventDonorFormModal(eventId, donor.id);
+            document.getElementById('delete-event-donor-btn').onclick = () => window.deleteEventDonor(eventId, donor.id);
+        };
+        
+        const showEventDonationFormModal = (eventId, donorId, onSaveCallback) => {
+            const content = `<form id="event-donation-form"><div class="mb-4"><label class="block mb-2">পরিমাণ</label><input type="number" id="amount" class="w-full bg-card-light p-3 rounded-lg" required></div><div class="mb-4"><label class="block mb-2">তারিখ</label><input type="date" id="date" class="w-full bg-card-light p-3 rounded-lg" value="${new Date().toISOString().split('T')[0]}" required></div></form>`;
+            const footer = `<button id="save-event-donation-btn" class="bg-accent text-white px-6 py-2 rounded-lg">সেভ করুন</button>`;
+            createModal('নতুন অনুদান', content, footer);
+            document.getElementById('save-event-donation-btn').onclick = async () => {
+                const form = document.getElementById('event-donation-form');
+                if (!form.checkValidity()) return form.reportValidity();
+                const data = { amount: Number(form.amount.value), date: Timestamp.fromDate(new Date(form.date.value)) };
+                try {
+                    await addDoc(collection(db, `events/${eventId}/donors/${donorId}/donations`), data);
+                    showToast('অনুদান যোগ হয়েছে!');
+                    closeModal();
+                    if (onSaveCallback) onSaveCallback();
+                } catch(e) { showToast('সেভ করতে সমস্যা হয়েছে', true); }
             };
         };
 
@@ -799,8 +1334,13 @@
         };
 
         // --- DELETE LOGIC ---
-        window.deleteExpense = (id) => showConfirmModal('নিশ্চিতকরণ', 'আপনি কি এই ব্যয়ের হিসাব মুছে ফেলতে চান?', () => {
-            deleteDoc(doc(db, 'expenses', id)).then(() => showToast('হিসাব মুছে ফেলা হয়েছে।')).catch(() => showToast('মুছে ফেলতে সমস্যা হয়েছে', true));
+        window.deleteExpense = (id) => showConfirmModal('নিশ্চিতকরণ', 'আপনি কি এই ব্যয়ের হিসাব মুছে ফেলতে চান?', async () => {
+            const batch = writeBatch(db);
+            const detailsSnapshot = await getDocs(collection(db, `expenses/${id}/details`));
+            detailsSnapshot.forEach(d => batch.delete(d.ref));
+            batch.delete(doc(db, 'expenses', id));
+            await batch.commit();
+            showToast('হিসাব মুছে ফেলা হয়েছে।');
         });
         
         window.deleteDonation = (contributorId, donationId) => showConfirmModal('নিশ্চিতকরণ', 'আপনি কি এই অনুদানটি মুছে ফেলতে চান?', () => {
@@ -815,6 +1355,23 @@
             const donationsSnapshot = await getDocs(collection(db, `contributors/${id}/donations`));
             donationsSnapshot.forEach(d => batch.delete(d.ref));
             batch.delete(doc(db, 'contributors', id));
+            await batch.commit();
+            showToast('দাতাকে মুছে ফেলা হয়েছে।');
+            closeModal();
+        });
+        
+        window.deleteEventDonation = (eventId, donorId, donationId) => showConfirmModal('নিশ্চিতকরণ', 'আপনি কি এই অনুদানটি মুছে ফেলতে চান?', () => {
+            deleteDoc(doc(db, `events/${eventId}/donors/${donorId}/donations`, donationId)).then(() => {
+                showToast('অনুদান মুছে ফেলা হয়েছে।');
+                showEventDonorDetailsModal(eventId, donorId);
+            }).catch(() => showToast('মুছে ফেলতে সমস্যা হয়েছে', true));
+        });
+        
+        window.deleteEventDonor = (eventId, donorId) => showConfirmModal('নিশ্চিতকরণ', 'এই দাতাকে মুছে ফেললে তার সকল অনুদানের হিসাবও মুছে যাবে। আপনি কি নিশ্চিত?', async () => {
+            const batch = writeBatch(db);
+            const donationsSnapshot = await getDocs(collection(db, `events/${eventId}/donors/${donorId}/donations`));
+            donationsSnapshot.forEach(d => batch.delete(d.ref));
+            batch.delete(doc(db, `events/${eventId}/donors`, donorId));
             await batch.commit();
             showToast('দাতাকে মুছে ফেলা হয়েছে।');
             closeModal();
@@ -851,11 +1408,9 @@
             // Fund Sub-Navigation with Smooth Transition
             document.querySelectorAll('.fund-subtab').forEach(tab => {
                 tab.addEventListener('click', (e) => {
-                    // Handle active state for tab buttons
                     document.querySelectorAll('.fund-subtab').forEach(t => t.classList.remove('active'));
                     e.currentTarget.classList.add('active');
                     
-                    // Handle content visibility with smooth transition
                     const targetId = `${e.currentTarget.dataset.subtab}-subpage`;
                     document.querySelectorAll('.fund-subcontent').forEach(c => {
                         c.classList.remove('active-subcontent');
@@ -888,10 +1443,10 @@
                  if (!isAdmin) return;
                  const newNumber = document.getElementById('bkash-number-input')?.value.trim();
                  if (newNumber) {
-                     try {
-                         await setDoc(doc(db, "settings", "main"), { bkashNumber: newNumber });
-                         showToast('বিকাশ নম্বর আপডেট হয়েছে!');
-                     } catch (error) { showToast('আপডেট ব্যর্থ হয়েছে', true); console.error(error); }
+                      try {
+                          await setDoc(doc(db, "settings", "main"), { bkashNumber: newNumber });
+                          showToast('বিকাশ নম্বর আপডেট হয়েছে!');
+                      } catch (error) { showToast('আপডেট ব্যর্থ হয়েছে', true); console.error(error); }
                  }
             });
             document.getElementById('add-contributor-btn')?.addEventListener('click', () => showContributorFormModal());
@@ -899,6 +1454,7 @@
             document.getElementById('add-blood-donor-btn')?.addEventListener('click', () => showBloodDonorFormModal());
             document.getElementById('manage-coordinators-btn')?.addEventListener('click', () => showCoordinatorModal());
             document.getElementById('show-coordinators-btn')?.addEventListener('click', () => showCoordinatorModal(true));
+            document.getElementById('add-event-btn')?.addEventListener('click', showAddEventModal);
             
             // Search Listeners
             document.getElementById('contributor-search-input')?.addEventListener('input', (e) => {
@@ -915,7 +1471,286 @@
                 const filteredDonors = allBloodDonors.filter(d => d.name.toLowerCase().includes(searchTerm) || d.group.toLowerCase().includes(searchTerm) || d.address.toLowerCase().includes(searchTerm));
                 renderBloodDonors(filteredDonors);
             });
+
+            // Download and Admin page listeners
+            document.getElementById('download-txt-btn')?.addEventListener('click', () => handleDownload('txt'));
+            document.getElementById('download-xlsx-btn')?.addEventListener('click', () => handleDownload('xlsx'));
+            document.getElementById('export-data-btn')?.addEventListener('click', exportAllData);
+            document.getElementById('import-data-btn')?.addEventListener('click', () => document.getElementById('import-file-input').click());
+            document.getElementById('import-file-input')?.addEventListener('change', handleImportFile);
+
         };
+
+        // --- DOWNLOAD AND ADMIN FEATURES ---
+
+        const populateDateFilters = () => {
+            const monthSelect = document.getElementById('report-month');
+            const yearSelect = document.getElementById('report-year');
+            if (!monthSelect || !yearSelect) return;
+
+            const months = ["জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"];
+            const currentYear = new Date().getFullYear();
+            const currentMonth = new Date().getMonth();
+
+            monthSelect.innerHTML = months.map((month, index) => `<option value="${index}" ${index === currentMonth ? 'selected' : ''}>${month}</option>`).join('');
+            
+            yearSelect.innerHTML = '';
+            for (let i = currentYear; i >= 2020; i--) {
+                yearSelect.innerHTML += `<option value="${i}">${i}</option>`;
+            }
+        };
+
+        const getMonthlyReportData = async () => {
+            const month = parseInt(document.getElementById('report-month').value);
+            const year = parseInt(document.getElementById('report-year').value);
+
+            const startDate = new Date(year, month, 1);
+            const endDate = new Date(year, month + 1, 0, 23, 59, 59);
+
+            const startTimestamp = Timestamp.fromDate(startDate);
+            const endTimestamp = Timestamp.fromDate(endDate);
+
+            let incomes = [];
+            let expenses = [];
+            let totalIncome = 0;
+            let totalExpense = 0;
+
+            // Fetch expenses
+            const expenseQuery = query(collection(db, "expenses"), where("date", ">=", startTimestamp), where("date", "<=", endTimestamp));
+            const expenseSnap = await getDocs(expenseQuery);
+            expenseSnap.forEach(doc => {
+                const data = doc.data();
+                expenses.push({ date: formatDate(data.date), description: data.description, amount: data.amount });
+                totalExpense += data.amount;
+            });
+
+            // Fetch incomes from general contributors
+            const contributorsSnap = await getDocs(collection(db, "contributors"));
+            for (const cDoc of contributorsSnap.docs) {
+                const donationQuery = query(collection(db, `contributors/${cDoc.id}/donations`), where("date", ">=", startTimestamp), where("date", "<=", endTimestamp));
+                const donationSnap = await getDocs(donationQuery);
+                donationSnap.forEach(dDoc => {
+                    const data = dDoc.data();
+                    incomes.push({ date: formatDate(data.date), description: `${cDoc.data().name} থেকে অনুদান`, amount: data.amount });
+                    totalIncome += data.amount;
+                });
+            }
+            
+            // Fetch incomes from events
+            const eventsSnap = await getDocs(collection(db, "events"));
+             for (const eDoc of eventsSnap.docs) {
+                const eventDonorsSnap = await getDocs(collection(db, `events/${eDoc.id}/donors`));
+                for (const edDoc of eventDonorsSnap.docs) {
+                    const donationQuery = query(collection(db, `events/${eDoc.id}/donors/${edDoc.id}/donations`), where("date", ">=", startTimestamp), where("date", "<=", endTimestamp));
+                    const donationSnap = await getDocs(donationQuery);
+                    donationSnap.forEach(dDoc => {
+                        const data = dDoc.data();
+                        incomes.push({ date: formatDate(data.date), description: `${eDoc.data().name} ইভেন্টে ${edDoc.data().name} থেকে অনুদান`, amount: data.amount });
+                        totalIncome += data.amount;
+                    });
+                }
+            }
+
+
+            return { incomes, expenses, totalIncome, totalExpense, month: document.getElementById('report-month').options[month].text, year };
+        };
+
+        const handleDownload = async (format) => {
+            showToast('রিপোর্ট তৈরি করা হচ্ছে...');
+            const reportData = await getMonthlyReportData();
+            
+            if (format === 'txt') {
+                let content = `হিলফুল ফুজুল যুব সংঘ বেগমপুর\n`;
+                content += `মাসিক রিপোর্ট: ${reportData.month}, ${reportData.year}\n`;
+                content += `=====================================\n\n`;
+                
+                content += `--- আয়ের হিসাব ---\n`;
+                reportData.incomes.forEach(item => {
+                    content += `${item.date} | ${item.description} | ${formatCurrency(item.amount)}\n`;
+                });
+                content += `\nমোট আয়: ${formatCurrency(reportData.totalIncome)}\n\n`;
+
+                content += `--- ব্যয়ের হিসাব ---\n`;
+                reportData.expenses.forEach(item => {
+                    content += `${item.date} | ${item.description} | ${formatCurrency(item.amount)}\n`;
+                });
+                content += `\nমোট ব্যয়: ${formatCurrency(reportData.totalExpense)}\n\n`;
+
+                content += `--- সারসংক্ষেপ ---\n`;
+                content += `বর্তমান ব্যালেন্স: ${formatCurrency(reportData.totalIncome - reportData.totalExpense)}\n`;
+
+                const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `report-${reportData.month}-${reportData.year}.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } else if (format === 'xlsx') {
+                const incomeSheet = XLSX.utils.json_to_sheet(reportData.incomes.map(i => ({'তারিখ': i.date, 'বিবরণ': i.description, 'টাকা': i.amount})));
+                const expenseSheet = XLSX.utils.json_to_sheet(reportData.expenses.map(e => ({'তারিখ': e.date, 'বিবরণ': e.description, 'টাকা': e.amount})));
+                const summarySheet = XLSX.utils.json_to_sheet([
+                    { 'বিবরণ': 'মোট আয়', 'টাকা': reportData.totalIncome },
+                    { 'বিবরণ': 'মোট ব্যয়', 'টাকা': reportData.totalExpense },
+                    { 'বিবরণ': 'বর্তমান ব্যালেন্স', 'টাকা': reportData.totalIncome - reportData.totalExpense },
+                ]);
+
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, incomeSheet, "আয়");
+                XLSX.utils.book_append_sheet(wb, expenseSheet, "ব্যয়");
+                XLSX.utils.book_append_sheet(wb, summarySheet, "সারসংক্ষেপ");
+
+                XLSX.writeFile(wb, `report-${reportData.month}-${reportData.year}.xlsx`);
+            }
+            showToast('রিপোর্ট ডাউনলোড হয়েছে!', false);
+        };
+        
+        const exportAllData = async () => {
+            showToast('ডেটা এক্সপোর্ট করা হচ্ছে...');
+            const backup = {};
+            const collectionsToBackup = ['contributors', 'donors', 'expenses', 'events', 'coordinators', 'settings'];
+
+            for (const colName of collectionsToBackup) {
+                backup[colName] = {};
+                const snapshot = await getDocs(collection(db, colName));
+                for (const docSnap of snapshot.docs) {
+                    backup[colName][docSnap.id] = docSnap.data();
+                    // Handle subcollections
+                    if (colName === 'contributors' || colName === 'events') {
+                        const subColName = colName === 'contributors' ? 'donations' : 'donors';
+                        backup[colName][docSnap.id][subColName] = {};
+                        const subColSnapshot = await getDocs(collection(db, `${colName}/${docSnap.id}/${subColName}`));
+                        for (const subDocSnap of subColSnapshot.docs) {
+                             backup[colName][docSnap.id][subColName][subDocSnap.id] = subDocSnap.data();
+                             // Level 3 subcollection for event donors
+                             if(colName === 'events') {
+                                 backup[colName][docSnap.id][subColName][subDocSnap.id]['donations'] = {};
+                                 const donationSnap = await getDocs(collection(db, `${colName}/${docSnap.id}/${subColName}/${subDocSnap.id}/donations`));
+                                 for(const dSnap of donationSnap.docs) {
+                                     backup[colName][docSnap.id][subColName][subDocSnap.id]['donations'][dSnap.id] = dSnap.data();
+                                 }
+                             }
+                        }
+                    } else if (colName === 'expenses') {
+                        backup[colName][docSnap.id]['details'] = {};
+                        const subColSnapshot = await getDocs(collection(db, `${colName}/${docSnap.id}/details`));
+                         for (const subDocSnap of subColSnapshot.docs) {
+                             backup[colName][docSnap.id]['details'][subDocSnap.id] = subDocSnap.data();
+                         }
+                    }
+                }
+            }
+            
+            const jsonString = JSON.stringify(backup, (key, value) => {
+                // Convert Timestamps to a serializable format
+                if (value && typeof value === 'object' && value.hasOwnProperty('seconds') && value.hasOwnProperty('nanoseconds')) {
+                    return { _type: 'timestamp', value: new Date(value.seconds * 1000).toISOString() };
+                }
+                return value;
+            }, 2);
+
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `hilful-fuzul-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('ডেটা এক্সপোর্ট সম্পন্ন হয়েছে!', false);
+        };
+
+        const handleImportFile = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const json = e.target.result;
+                    const data = JSON.parse(json, (key, value) => {
+                        if (value && value._type === 'timestamp') {
+                            return Timestamp.fromDate(new Date(value.value));
+                        }
+                        return value;
+                    });
+                    showConfirmModal(
+                        'ডেটা ইমপোর্ট নিশ্চিত করুন', 
+                        'আপনি কি নিশ্চিতভাবে এই ডেটা ইমপোর্ট করতে চান? এই কাজটি আপনার বর্তমান সকল ডেটা মুছে ফেলবে এবং পুনরুদ্ধার করা যাবে না।',
+                        () => importData(data)
+                    );
+                } catch (err) {
+                    showToast('ফাইলটি সঠিক JSON ফরম্যাটে নেই।', true);
+                    console.error("Import Error:", err);
+                }
+            };
+            reader.readAsText(file);
+             // Reset file input
+            event.target.value = null;
+        };
+
+        const importData = async (data) => {
+            showToast('ডেটা ইমপোর্ট শুরু হয়েছে...');
+            const batch = writeBatch(db);
+
+            for (const colName in data) {
+                if (Object.hasOwnProperty.call(data, colName)) {
+                    const collectionData = data[colName];
+                    for (const docId in collectionData) {
+                        if (Object.hasOwnProperty.call(collectionData, docId)) {
+                            const docData = { ...collectionData[docId] };
+                            const docRef = doc(db, colName, docId);
+                            
+                            // Separate subcollections before setting the main doc
+                            const subcollections = {};
+                            if (docData.donations) {
+                                subcollections.donations = docData.donations;
+                                delete docData.donations;
+                            }
+                             if (docData.donors) {
+                                subcollections.donors = docData.donors;
+                                delete docData.donors;
+                            }
+                            if (docData.details) {
+                                subcollections.details = docData.details;
+                                delete docData.details;
+                            }
+
+                            batch.set(docRef, docData);
+
+                            // Handle subcollections
+                            for(const subColName in subcollections) {
+                                const subColData = subcollections[subColName];
+                                for(const subDocId in subColData) {
+                                    const subDocData = {...subColData[subDocId]};
+                                    const subDocRef = doc(db, `${colName}/${docId}/${subColName}`, subDocId);
+
+                                    // Handle level 3 subcollections (for events)
+                                    if(subDocData.donations) {
+                                        const level3Data = subDocData.donations;
+                                        delete subDocData.donations;
+                                        for(const l3DocId in level3Data) {
+                                            const l3DocRef = doc(db, `${colName}/${docId}/${subColName}/${subDocId}/donations`, l3DocId);
+                                            batch.set(l3DocRef, level3Data[l3DocId]);
+                                        }
+                                    }
+                                    
+                                    batch.set(subDocRef, subDocData);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            try {
+                await batch.commit();
+                showToast('ডেটা সফলভাবে ইমপোর্ট হয়েছে!', false);
+            } catch (error) {
+                showToast('ডেটা ইমপোর্ট করতে সমস্যা হয়েছে।', true);
+                console.error("Batch Commit Error:", error);
+            }
+        };
+
         
         // --- INITIALIZE APP ---
         document.addEventListener('DOMContentLoaded', () => {
