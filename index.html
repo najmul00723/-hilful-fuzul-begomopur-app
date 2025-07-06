@@ -122,6 +122,7 @@
                     <button data-tab="fund" class="main-nav-tab nav-tab py-3 px-2 md:px-4 text-sm sm:text-base text-gray-300 hover:text-white">তহবিল</button>
                     <button data-tab="donor" class="main-nav-tab nav-tab py-3 px-2 md:px-4 text-sm sm:text-base text-gray-300 hover:text-white">রক্তদাতা</button>
                     <button data-tab="download" class="main-nav-tab nav-tab py-3 px-2 md:px-4 text-sm sm:text-base text-gray-300 hover:text-white">তথ্য ডাউনলোড</button>
+                    <button data-tab="about" class="main-nav-tab nav-tab py-3 px-2 md:px-4 text-sm sm:text-base text-gray-300 hover:text-white">About</button>
                     <button data-tab="admin" class="main-nav-tab nav-tab py-3 px-2 md:px-4 text-sm sm:text-base text-gray-300 hover:text-white admin-only" style="display: none;">অ্যাডমিন</button>
                 </div>
             </nav>
@@ -155,11 +156,22 @@
                 <div class="bg-card p-6 rounded-lg shadow text-center">
                     <h2 class="text-2xl font-bold mb-4">সংগঠনে অনুদান পাঠান</h2>
                     <p class="text-gray-300 mb-4">আপনার অনুদান অসহায় মানুষের মুখে হাসি ফোটাতে পারে।</p>
+                    
+                    <p class="text-lg font-semibold text-white mb-2">বিকাশে সেন্ড মানি করুন</p>
+                    
+                    <!-- QR Code Image -->
+                    <div class="flex justify-center mb-4">
+                        <img src="https://i.ibb.co/27S5sVkY/qr-num-800-800.png" alt="QR Code" class="w-40 h-40 rounded-lg bg-white p-1 object-contain">
+                    </div>
+
+                    <!-- bKash Number -->
                     <div class="flex justify-center items-center gap-4">
                         <p id="bkash-number-display" class="text-2xl sm:text-3xl font-bold accent-color tracking-widest">01XXXXXXXXX</p>
                         <button id="copy-bkash-btn" class="p-2 bg-card-light rounded-lg hover:bg-gray-600"><i data-lucide="copy" class="w-6 h-6"></i></button>
                     </div>
-                     <div id="edit-bkash-container" class="mt-4 hidden">
+
+                    <!-- Admin Edit Section -->
+                    <div id="edit-bkash-container" class="mt-4 hidden">
                          <input type="text" id="bkash-number-input" class="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-center" placeholder="নতুন বিকাশ নম্বর">
                          <button id="save-bkash-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg ml-2 hover:bg-green-700">সেভ</button>
                      </div>
@@ -170,6 +182,7 @@
             <div id="fund-page" class="tab-content hidden">
                 <div class="flex justify-center border-b border-gray-700 mb-6">
                     <button data-subtab="all-contributors" class="fund-subtab nav-tab py-2 px-4 sm:px-6 text-sm sm:text-base active">সকল দাতা</button>
+                    <button data-subtab="zakat-fund" class="fund-subtab nav-tab py-2 px-4 sm:px-6 text-sm sm:text-base">যাকাত ফান্ড</button>
                     <button data-subtab="events" class="fund-subtab nav-tab py-2 px-4 sm:px-6 text-sm sm:text-base">ইভেন্ট</button>
                     <button data-subtab="expense" class="fund-subtab nav-tab py-2 px-4 sm:px-6 text-sm sm:text-base">ব্যয়ের খাতা</button>
                 </div>
@@ -187,6 +200,21 @@
                         <div id="contributor-counter" class="text-right text-gray-400 font-semibold w-full sm:w-auto">মোট দাতা: ০ জন</div>
                     </div>
                     <div id="contributors-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                </div>
+
+                <div id="zakat-fund-subpage" class="fund-subcontent">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                        <h2 class="text-2xl font-bold">যাকাত ফান্ড দাতার তালিকা</h2>
+                        <button id="add-zakat-contributor-btn" class="admin-only bg-accent text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-amber-600 w-full sm:w-auto"><i data-lucide="plus-circle" class="w-5 h-5"></i> নতুন যাকাত দাতা</button>
+                    </div>
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <div class="relative w-full sm:max-w-sm">
+                            <input type="text" id="zakat-contributor-search-input" class="w-full bg-card-light p-3 pl-10 rounded-lg border-2 border-transparent focus:border-accent focus:outline-none" placeholder="দাতা খুঁজুন (নাম, ঠিকানা)...">
+                            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                        </div>
+                        <div id="zakat-contributor-counter" class="text-right text-gray-400 font-semibold w-full sm:w-auto">মোট দাতা: ০ জন</div>
+                    </div>
+                    <div id="zakat-contributors-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
 
                 <div id="events-subpage" class="fund-subcontent">
@@ -271,6 +299,55 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- About Page -->
+            <div id="about-page" class="tab-content hidden">
+                <div class="bg-card p-6 rounded-lg shadow-lg text-gray-300 leading-relaxed">
+                    <h2 class="text-3xl font-bold accent-color mb-4 text-center">আমাদের সম্পর্কে</h2>
+                    <p class="text-center italic mb-6">"ইসলামের আলোয় আলোকিত হয়, মানবতার সেবায় নিবেদিত হয়!"</p>
+                    
+                    <p class="mb-4">
+                        এই মহান মূলমন্ত্রকে হৃদয়ে ধারণ করে পথচলা শুরু করেছে <strong class="accent-color">"হিলফুল ফুজুল যুব সংঘ বেগমপুর"</strong>। এটি একটি সম্পূর্ণ অরাজনৈতিক, স্বেচ্ছাসেবী ও ইসলামভিত্তিক যুব সংগঠন, যা ইতিহাসের সেই বিখ্যাত "হিলফুল ফুজুল" চুক্তির আদর্শে অনুপ্রাণিত, যেখানে মজলুমের পাশে দাঁড়ানো এবং সমাজে ন্যায়বিচার প্রতিষ্ঠার শপথ নেওয়া হয়েছিল।
+                    </p>
+                    <p class="mb-6">
+                        আমাদের মূল লক্ষ্য দুটি—একদিকে ইসলামের বিশুদ্ধ ও শান্তিপূর্ণ বাণী সমাজের প্রতিটি মানুষের কাছে পৌঁছে দেওয়া, অন্যদিকে সেই শিক্ষার আলোকে আর্তমানবতার সেবায় নিজেদের উৎসর্গ করা। আমরা বিশ্বাস করি, ইসলাম ও মানবতা পরস্পর পরিপূরক। আল্লাহর সন্তুষ্টির জন্য সৃষ্টির সেবা করাই আমাদের ব্রত।
+                    </p>
+
+                    <h3 class="text-2xl font-bold accent-color mb-3 border-b-2 border-accent/50 pb-2">আমাদের লক্ষ্য ও উদ্দেশ্য</h3>
+                    <ul class="space-y-3 list-inside mb-6">
+                        <li>✅ <strong class="font-semibold">ইসলামী দাওয়াত:</strong> কুরআন ও সহিহ সুন্নাহর আলোকে ইসলামের সঠিক জ্ঞান সবার কাছে পৌঁছে দেওয়া এবং ঈমান, আমল ও আখলাক গঠনে সহায়তা করা।</li>
+                        <li>✅ <strong class="font-semibold">সামাজিক সচেতনতা:</strong> সমাজে প্রচলিত সকল প্রকার কুসংস্কার, অন্যায় ও অসামাজিক কার্যকলাপের বিরুদ্ধে মানুষকে সচেতন করা।</li>
+                        <li>✅ <strong class="font-semibold">মানবসেবা:</strong> অসুস্থ ও বিপদগ্রস্তদের জন্য রক্তদান, দরিদ্র ও অসহায়দের জন্য আর্থিক সহায়তা এবং ফিতরা ও যাকাত ফান্ড গঠন করে তা সঠিকভাবে বিতরণ করা।</li>
+                        <li>✅ <strong class="font-semibold">জ্ঞানভিত্তিক সমাজ:</strong> তরুণদের জন্য নিয়মিত শিক্ষামূলক হালাকা, বৈঠক ও কর্মশালার আয়োজন করা।</li>
+                        <li>✅ <strong class="font-semibold">স্বচ্ছতা ও জবাবদিহিতা:</strong> সংগঠনের নিজস্ব তহবিলের প্রতিটি পয়সার স্বচ্ছতা নিশ্চিত করা এবং সকল আয়-ব্যয়ের হিসাব জনসম্মুখে প্রকাশ করা।</li>
+                    </ul>
+
+                    <h3 class="text-2xl font-bold accent-color mb-3 border-b-2 border-accent/50 pb-2">আমাদের পরিচালনা কমিটি</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 mb-6">
+                        <p><strong>সভাপতি:</strong> নাজমুল হাসান</p>
+                        <p><strong>সেক্রেটারি:</strong> সেলিম হোসেন</p>
+                        <p><strong>কোষাধ্যক্ষ:</strong> ইবাদত হাসান</p>
+                        <p><strong>সহ-সভাপতি:</strong> [এখানে নাম যুক্ত হবে]</p>
+                        <p><strong>যুগ্ম-সাধারণ সম্পাদক:</strong> [এখানে নাম যুক্ত হবে]</p>
+                        <p><strong>সাংগঠনিক সম্পাদক:</strong> [এখানে নাম যুক্ত হবে]</p>
+                        <p><strong>প্রচার সম্পাদক:</strong> [এখানে নাম যুক্ত হবে]</p>
+                        <p><strong>দপ্তর সম্পাদক:</strong> [এখানে নাম যুক্ত হবে]</p>
+                        <p class="md:col-span-2"><strong>নির্বাহী সদস্য:</strong> [একাধিক সদস্যের নাম যুক্ত হবে]</p>
+                    </div>
+
+                    <h3 class="text-2xl font-bold accent-color mb-3 border-b-2 border-accent/50 pb-2">আমাদের সাথে যোগ দিন</h3>
+                    <p class="mb-4">
+                        আপনি যদি একজন সৎ, নিষ্ঠাবান ও ইসলামিক মূল্যবোধে বিশ্বাসী হন এবং আল্লাহর সন্তুষ্টির জন্য সমাজের কল্যাণে কাজ করতে চান, তবে আমাদের এই সংগঠনে আপনাকে স্বাগতম। আমাদের কোনো রাজনৈতিক সংশ্লিষ্টতা নেই, এবং আমাদের সকল কার্যক্রম শুধুমাত্র স্বেচ্ছাশ্রমের ভিত্তিতে পরিচালিত হয়।
+                    </p>
+                    <p class="text-center text-lg italic accent-color mt-6">
+                        "দাওয়াত ও দয়ার মাধ্যমে সমাজ পরিবর্তনে এগিয়ে আসি।"
+                    </p>
+                    <p class="text-center mt-2">
+                        আপনিও হোন এই মহৎ কাফেলার অংশীদার। আল্লাহর সন্তুষ্টি অর্জনের পথে একসাথে চলুন।
+                    </p>
+                </div>
+            </div>
+
 
             <!-- Admin Page -->
             <div id="admin-page" class="tab-content hidden">
@@ -307,6 +384,12 @@
 
     <!-- Modals Container -->
     <div id="modals-container"></div>
+    
+    <!-- Floating Back Button -->
+    <button id="back-button" class="sm:hidden hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-40 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full flex items-center gap-2 shadow-lg">
+        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+        ফিরে যান
+    </button>
 
     <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-5 right-5 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50"></div>
@@ -333,8 +416,10 @@
         let isAdmin = false;
         let allBloodDonors = [];
         let allContributors = [];
+        let allZakatContributors = [];
         let allEvents = [];
         let detailedExpenses = [];
+        let currentEventDonors = [];
 
         // --- UTILS ---
         const showToast = (message, isError = false) => {
@@ -430,6 +515,7 @@
         const loadAllData = () => {
             loadAllStats();
             loadContributors();
+            loadZakatContributors();
             loadExpenses();
             loadBloodDonors();
             loadBikashNumber();
@@ -455,40 +541,63 @@
             const totalExpenseEl = document.getElementById('total-expense');
             const currentBalanceEl = document.getElementById('current-balance');
             const totalDonorsEl = document.getElementById('total-donors');
-            
-            let totalIncome = 0;
-            let totalExpense = 0;
 
-            const updateBalance = () => {
-                if(currentBalanceEl) currentBalanceEl.textContent = formatCurrency(totalIncome - totalExpense);
-            };
+            const calculateAndUpdateTotals = async () => {
+                let totalIncome = 0;
+                let totalExpense = 0;
 
-            onSnapshot(collection(db, "expenses"), (snapshot) => {
-                totalExpense = snapshot.docs.reduce((sum, doc) => sum + doc.data().amount, 0);
-                if(totalExpenseEl) totalExpenseEl.textContent = formatCurrency(totalExpense);
-                updateBalance();
-            }, (error) => console.error("Error loading expenses for stats:", error.message));
-
-            onSnapshot(collection(db, "donors"), (snapshot) => {
-                if(totalDonorsEl) totalDonorsEl.textContent = `${snapshot.size} জন`;
-            }, (error) => console.error("Error loading donors for stats:", error.message));
-            
-            onSnapshot(query(collection(db, "contributors")), (snapshot) => {
-                totalIncome = 0;
-                if (snapshot.empty) {
-                    if(totalIncomeEl) totalIncomeEl.textContent = formatCurrency(0);
-                    updateBalance();
-                    return;
-                }
-                let promises = snapshot.docs.map(cDoc => getDocs(collection(db, `contributors/${cDoc.id}/donations`)));
-                Promise.all(promises).then(results => {
-                    results.forEach(donationsSnapshot => {
-                        donationsSnapshot.forEach(dDoc => { totalIncome += dDoc.data().amount; });
-                    });
-                    if(totalIncomeEl) totalIncomeEl.textContent = formatCurrency(totalIncome);
-                    updateBalance();
+                // Calculate Expenses
+                const expenseSnap = await getDocs(collection(db, "expenses"));
+                expenseSnap.forEach(doc => {
+                    totalExpense += doc.data().amount;
                 });
-            }, (error) => console.error("Error loading contributors for stats:", error.message));
+
+                // Calculate Incomes from all sources
+                const incomeSources = [
+                    { path: "contributors", sub: "donations" },
+                    { path: "zakat_contributors", sub: "donations" }
+                ];
+
+                for (const source of incomeSources) {
+                    const parentSnap = await getDocs(collection(db, source.path));
+                    for (const parentDoc of parentSnap.docs) {
+                        const subSnap = await getDocs(collection(db, `${source.path}/${parentDoc.id}/${source.sub}`));
+                        subSnap.forEach(subDoc => {
+                            totalIncome += subDoc.data().amount;
+                        });
+                    }
+                }
+
+                const eventsSnap = await getDocs(collection(db, "events"));
+                for (const eventDoc of eventsSnap.docs) {
+                    const eventDonorsSnap = await getDocs(collection(db, `events/${eventDoc.id}/donors`));
+                    for (const donorDoc of eventDonorsSnap.docs) {
+                        const donationsSnap = await getDocs(collection(db, `events/${eventDoc.id}/donors/${donorDoc.id}/donations`));
+                        donationsSnap.forEach(dDoc => {
+                            totalIncome += dDoc.data().amount;
+                        });
+                    }
+                }
+                
+                // Update UI
+                if (totalIncomeEl) totalIncomeEl.textContent = formatCurrency(totalIncome);
+                if (totalExpenseEl) totalExpenseEl.textContent = formatCurrency(totalExpense);
+                if (currentBalanceEl) currentBalanceEl.textContent = formatCurrency(totalIncome - totalExpense);
+            };
+            
+            // Listen to changes in all relevant top-level collections
+            const collectionsToListen = ["contributors", "zakat_contributors", "events", "expenses"];
+            collectionsToListen.forEach(colName => {
+                onSnapshot(collection(db, colName), calculateAndUpdateTotals);
+            });
+
+            // Listener for blood donors count
+            onSnapshot(collection(db, "donors"), (snapshot) => {
+                if(totalDonorsEl) totalDonorsEl.textContent = `${new Intl.NumberFormat('bn-BD').format(snapshot.size)} জন`;
+            }, (error) => console.error("Error loading donors for stats:", error.message));
+
+            // Initial calculation
+            calculateAndUpdateTotals();
         };
 
         // --- FUND PAGE ---
@@ -505,10 +614,24 @@
                 renderContributors(allContributors);
             }, (error) => console.error("Error loading contributors list:", error.message));
         };
+        
+        const loadZakatContributors = () => {
+            const q = query(collection(db, "zakat_contributors"), orderBy("createdAt", "desc"));
+            onSnapshot(q, async (snapshot) => {
+                const contributorsWithTotal = await Promise.all(snapshot.docs.map(async (doc) => {
+                    const contributor = { id: doc.id, ...doc.data() };
+                    const donationsSnapshot = await getDocs(collection(db, `zakat_contributors/${contributor.id}/donations`));
+                    const totalDonation = donationsSnapshot.docs.reduce((sum, d) => sum + d.data().amount, 0);
+                    return { ...contributor, totalDonation };
+                }));
+                allZakatContributors = contributorsWithTotal;
+                renderZakatContributors(allZakatContributors);
+            }, (error) => console.error("Error loading Zakat contributors list:", error.message));
+        };
 
-        const renderContributors = (contributors) => {
-            const listEl = document.getElementById('contributors-list');
-            const counterEl = document.getElementById('contributor-counter');
+        const renderContributorsGeneric = (contributors, listElId, counterElId, detailsModalFn) => {
+             const listEl = document.getElementById(listElId);
+            const counterEl = document.getElementById(counterElId);
             if(!listEl || !counterEl) return;
 
             counterEl.textContent = `মোট দাতা: ${new Intl.NumberFormat('bn-BD').format(contributors.length)} জন`;
@@ -523,9 +646,17 @@
                 const card = document.createElement('div');
                 card.className = 'bg-card p-4 rounded-lg shadow hover:shadow-lg hover:border-accent border border-transparent transition-all cursor-pointer';
                 card.innerHTML = `<h3 class="text-xl font-bold accent-color">${contributor.name}</h3><p class="text-gray-400">${contributor.address || ''}</p><p class="mt-2 text-lg font-semibold">মোট অনুদান: ${formatCurrency(contributor.totalDonation)}</p>`;
-                card.onclick = () => showContributorDetailsModal(contributor.id);
+                card.onclick = () => detailsModalFn(contributor.id);
                 listEl.appendChild(card);
             });
+        }
+
+        const renderContributors = (contributors) => {
+            renderContributorsGeneric(contributors, 'contributors-list', 'contributor-counter', showContributorDetailsModal);
+        };
+        
+        const renderZakatContributors = (contributors) => {
+             renderContributorsGeneric(contributors, 'zakat-contributors-list', 'zakat-contributor-counter', showZakatContributorDetailsModal);
         };
 
         const loadExpenses = () => {
@@ -566,13 +697,14 @@
             }, (error) => console.error("Error loading expenses list:", error.message));
         };
 
-        const showContributorFormModal = async (contributorId = null) => {
+        const showContributorFormModal = async (contributorId = null, isZakat = false) => {
+            const collectionName = isZakat ? 'zakat_contributors' : 'contributors';
             let existingData = {};
             if (contributorId) {
-                const docSnap = await getDoc(doc(db, 'contributors', contributorId));
+                const docSnap = await getDoc(doc(db, collectionName, contributorId));
                 if (docSnap.exists()) existingData = docSnap.data();
             }
-            const title = contributorId ? 'দাতার তথ্য এডিট' : 'নতুন দাতা যোগ';
+            const title = contributorId ? 'দাতার তথ্য এডিট' : (isZakat ? 'নতুন যাকাত দাতা যোগ' : 'নতুন দাতা যোগ');
             const content = `<form id="contributor-form" class="space-y-4">
                 <input type="text" id="name" placeholder="নাম" class="w-full bg-card-light p-3 rounded-lg" value="${existingData.name || ''}" required>
                 <input type="text" id="fatherName" placeholder="পিতার নাম (ঐচ্ছিক)" class="w-full bg-card-light p-3 rounded-lg" value="${existingData.fatherName || ''}">
@@ -594,10 +726,10 @@
                 };
                 try {
                     if (contributorId) {
-                        await setDoc(doc(db, 'contributors', contributorId), data);
+                        await setDoc(doc(db, collectionName, contributorId), data);
                         showToast('তথ্য আপডেট হয়েছে!');
                     } else {
-                        await addDoc(collection(db, 'contributors'), data);
+                        await addDoc(collection(db, collectionName), data);
                         showToast('নতুন দাতা যোগ হয়েছে!');
                     }
                     closeModal();
@@ -605,10 +737,11 @@
             };
         };
 
-        const showContributorDetailsModal = async (contributorId) => {
-            const contributorSnap = await getDoc(doc(db, 'contributors', contributorId));
+        const showContributorDetailsModal = async (contributorId, isZakat = false) => {
+            const collectionName = isZakat ? 'zakat_contributors' : 'contributors';
+            const contributorSnap = await getDoc(doc(db, collectionName, contributorId));
             const contributor = { id: contributorSnap.id, ...contributorSnap.data() };
-            const donationsSnapshot = await getDocs(query(collection(db, `contributors/${contributor.id}/donations`), orderBy("date", "desc")));
+            const donationsSnapshot = await getDocs(query(collection(db, `${collectionName}/${contributor.id}/donations`), orderBy("date", "desc")));
             const donations = donationsSnapshot.docs.map(d => ({id: d.id, ...d.data()}));
             
             const historyTabsHTML = `
@@ -637,10 +770,28 @@
             
             createModal('দাতার বিস্তারিত', content, footer);
             
+            const historyContainer = document.querySelector('#donation-history-content').parentElement;
+            let historyTouchStartX = 0;
+            historyContainer.addEventListener('touchstart', e => { historyTouchStartX = e.changedTouches[0].screenX; e.stopPropagation(); }, { passive: true });
+            historyContainer.addEventListener('touchend', e => {
+                const touchEndX = e.changedTouches[0].screenX;
+                e.stopPropagation();
+                if (Math.abs(historyTouchStartX - touchEndX) < 40) return;
+
+                const tabs = Array.from(historyContainer.querySelectorAll('.history-tab'));
+                const activeIndex = tabs.findIndex(t => t.classList.contains('active'));
+                
+                if (touchEndX < historyTouchStartX) { // Swipe Left
+                    if (activeIndex < tabs.length - 1) tabs[activeIndex + 1].click();
+                } else { // Swipe Right
+                    if (activeIndex > 0) tabs[activeIndex - 1].click();
+                }
+            }, { passive: true });
+
             const historyContentEl = document.getElementById('donation-history-content');
 
             const renderAllDonations = (donationsList) => {
-                const tableHTML = `<table class="w-full text-left"><thead><tr><th class="p-2">তারিখ</th><th class="p-2 text-right">পরিমাণ</th><th class="p-2 text-center admin-only" style="display: none;"></th></tr></thead><tbody>${donationsList.map(d => `<tr><td class="p-2">${formatDate(d.date)}</td><td class="p-2 text-right">${formatCurrency(d.amount)}</td><td class="p-2 text-center admin-only" style="display: none;"><button onclick="window.deleteDonation('${contributor.id}', '${d.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('') || '<tr><td colspan="3" class="text-center p-4">কোনো অনুদান নেই।</td></tr>'}</tbody></table>`;
+                const tableHTML = `<table class="w-full text-left"><thead><tr><th class="p-2">তারিখ</th><th class="p-2 text-right">পরিমাণ</th><th class="p-2 text-center admin-only" style="display: none;">অ্যাকশন</th></tr></thead><tbody>${donationsList.map(d => `<tr><td class="p-2">${formatDate(d.date)}</td><td class="p-2 text-right">${formatCurrency(d.amount)}</td><td class="p-2 text-center admin-only" style="display: none;"><button class="text-blue-400 hover:text-blue-300 mr-2" onclick="window.editDonation('${contributor.id}', '${d.id}', ${isZakat})"><i data-lucide="edit" class="w-4 h-4"></i></button><button onclick="window.deleteDonation('${contributor.id}', '${d.id}', ${isZakat})" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('') || '<tr><td colspan="3" class="text-center p-4">কোনো অনুদান নেই।</td></tr>'}</tbody></table>`;
                 historyContentEl.innerHTML = tableHTML;
                 lucide.createIcons();
                 updateUIVisibility();
@@ -701,13 +852,61 @@
                 });
             });
 
-            document.getElementById('add-new-donation-btn').onclick = () => showDonationFormModal(contributor.id, () => showContributorDetailsModal(contributorId));
-            document.getElementById('edit-contributor-btn').onclick = () => showContributorFormModal(contributor.id);
-            document.getElementById('delete-contributor-btn').onclick = () => window.deleteContributor(contributor.id);
+            document.getElementById('add-new-donation-btn').onclick = () => showDonationFormModal(contributor.id, () => showContributorDetailsModal(contributorId, isZakat), isZakat);
+            document.getElementById('edit-contributor-btn').onclick = () => showContributorFormModal(contributor.id, isZakat);
+            document.getElementById('delete-contributor-btn').onclick = () => window.deleteContributor(contributor.id, isZakat);
             updateUIVisibility();
         };
+        
+        const showZakatContributorDetailsModal = (contributorId) => showContributorDetailsModal(contributorId, true);
 
-        const showDonationFormModal = (contributorId, onSaveCallback) => {
+        window.editDonation = async (contributorId, donationId, isZakat = false) => {
+            const collectionName = isZakat ? 'zakat_contributors' : 'contributors';
+            const donationSnap = await getDoc(doc(db, `${collectionName}/${contributorId}/donations`, donationId));
+            if (!donationSnap.exists()) {
+                showToast('অনুদানটি পাওয়া যায়নি।', true);
+                return;
+            }
+            const donationData = donationSnap.data();
+
+            const content = `<form id="edit-donation-form" class="space-y-4">
+                <input type="number" id="edit-donation-amount" placeholder="পরিমাণ" class="w-full bg-card-light p-3 rounded-lg" value="${donationData.amount}" required>
+                <input type="date" id="edit-donation-date" class="w-full bg-card-light p-3 rounded-lg" value="${dateToInputFormat(donationData.date)}" required>
+            </form>`;
+            const footer = `<button id="update-donation-btn" class="bg-accent text-white px-6 py-2 rounded-lg">আপডেট করুন</button>`;
+
+            createModal('অনুদান এডিট করুন', content, footer);
+
+            document.getElementById('update-donation-btn').onclick = async () => {
+                const newAmount = Number(document.getElementById('edit-donation-amount').value);
+                const newDate = document.getElementById('edit-donation-date').value;
+
+                if (newAmount <= 0 || !newDate) {
+                    showToast('সঠিক পরিমাণ এবং তারিখ দিন।', true);
+                    return;
+                }
+
+                try {
+                    await updateDoc(doc(db, `${collectionName}/${contributorId}/donations`, donationId), {
+                        amount: newAmount,
+                        date: Timestamp.fromDate(new Date(newDate))
+                    });
+                    showToast('অনুদান আপডেট হয়েছে!');
+                    closeModal();
+                    if (isZakat) {
+                        showZakatContributorDetailsModal(contributorId);
+                    } else {
+                        showContributorDetailsModal(contributorId);
+                    }
+                } catch (e) {
+                    showToast('আপডেট করতে সমস্যা হয়েছে।', true);
+                    console.error(e);
+                }
+            };
+        };
+
+        const showDonationFormModal = (contributorId, onSaveCallback, isZakat = false) => {
+            const collectionName = isZakat ? 'zakat_contributors' : 'contributors';
             const content = `<form id="donation-form"><div class="mb-4"><label class="block mb-2">পরিমাণ</label><input type="number" id="amount" class="w-full bg-card-light p-3 rounded-lg" required></div><div class="mb-4"><label class="block mb-2">তারিখ</label><input type="date" id="date" class="w-full bg-card-light p-3 rounded-lg" value="${new Date().toISOString().split('T')[0]}" required></div></form>`;
             const footer = `<button id="save-donation-btn" class="bg-accent text-white px-6 py-2 rounded-lg">সেভ করুন</button>`;
             createModal('নতুন অনুদান', content, footer);
@@ -716,7 +915,7 @@
                 if (!form.checkValidity()) return form.reportValidity();
                 const data = { amount: Number(form.amount.value), date: Timestamp.fromDate(new Date(form.date.value)) };
                 try {
-                    await addDoc(collection(db, `contributors/${contributorId}/donations`), data);
+                    await addDoc(collection(db, `${collectionName}/${contributorId}/donations`), data);
                     showToast('অনুদান যোগ হয়েছে!');
                     closeModal();
                     if (onSaveCallback) onSaveCallback();
@@ -1165,6 +1364,7 @@
             const detailsView = document.getElementById('event-details-view');
             const eventSnap = await getDoc(doc(db, 'events', eventId));
             const eventData = eventSnap.data();
+            const backButton = document.getElementById('back-button');
 
             detailsView.innerHTML = `
                 <div class="flex justify-between items-center mb-4">
@@ -1178,18 +1378,40 @@
                     <h3 class="text-xl font-bold">ইভেন্টের দাতা তালিকা</h3>
                     <button id="add-event-donor-btn" class="admin-only bg-accent text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-amber-600 w-full sm:w-auto"><i data-lucide="plus-circle" class="w-5 h-5"></i> নতুন দাতা</button>
                 </div>
+                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <div class="relative w-full sm:max-w-sm">
+                        <input type="text" id="event-donor-search-input" class="w-full bg-card p-3 pl-10 rounded-lg border-2 border-transparent focus:border-accent focus:outline-none" placeholder="দাতা খুঁজুন (নাম, ঠিকানা)...">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                    </div>
+                    <div id="event-donor-counter" class="text-right text-gray-400 font-semibold w-full sm:w-auto">মোট দাতা: ০ জন</div>
+                </div>
                 <div id="event-donors-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             `;
             detailsView.classList.remove('hidden');
+            if (backButton) backButton.classList.remove('hidden');
+            
             lucide.createIcons();
             updateUIVisibility();
 
-            document.getElementById('back-to-events-btn').onclick = () => {
+            const goBack = () => {
                 detailsView.classList.add('hidden');
                 document.getElementById('events-list-view').classList.remove('hidden');
+                if (backButton) backButton.classList.add('hidden');
             };
+
+            document.getElementById('back-to-events-btn').onclick = goBack;
+            if (backButton) backButton.onclick = goBack;
             
             document.getElementById('add-event-donor-btn').onclick = () => showEventDonorFormModal(eventId);
+            
+            document.getElementById('event-donor-search-input')?.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filtered = currentEventDonors.filter(d => 
+                    d.name.toLowerCase().includes(searchTerm) ||
+                    (d.address && d.address.toLowerCase().includes(searchTerm))
+                );
+                renderEventDonors(eventId, filtered);
+            });
 
             loadEventDonors(eventId);
         };
@@ -1203,13 +1425,18 @@
                     const totalDonation = donationsSnapshot.docs.reduce((sum, d) => sum + d.data().amount, 0);
                     return { ...donor, totalDonation };
                 }));
-                renderEventDonors(eventId, donorsWithTotal);
+                currentEventDonors = donorsWithTotal;
+                renderEventDonors(eventId, currentEventDonors);
              });
         };
 
         const renderEventDonors = (eventId, donors) => {
             const listEl = document.getElementById('event-donors-list');
-            if(!listEl) return;
+            const counterEl = document.getElementById('event-donor-counter');
+            if(!listEl || !counterEl) return;
+
+            counterEl.textContent = `মোট দাতা: ${new Intl.NumberFormat('bn-BD').format(donors.length)} জন`;
+
             if (donors.length === 0) {
                 listEl.innerHTML = `<p class="col-span-full text-center text-gray-400">এই ইভেন্টে কোনো দাতার তথ্য পাওয়া যায়নি।</p>`;
                 return;
@@ -1528,22 +1755,32 @@
             showToast('হিসাব মুছে ফেলা হয়েছে।');
         });
         
-        window.deleteDonation = (contributorId, donationId) => showConfirmModal('নিশ্চিতকরণ', 'আপনি কি এই অনুদানটি মুছে ফেলতে চান?', () => {
-            deleteDoc(doc(db, `contributors/${contributorId}/donations`, donationId)).then(() => {
-                showToast('অনুদান মুছে ফেলা হয়েছে।');
-                showContributorDetailsModal(contributorId);
-            }).catch(() => showToast('মুছে ফেলতে সমস্যা হয়েছে', true));
-        });
+        window.deleteDonation = (contributorId, donationId, isZakat = false) => {
+            const collectionName = isZakat ? 'zakat_contributors' : 'contributors';
+            showConfirmModal('নিশ্চিতকরণ', 'আপনি কি এই অনুদানটি মুছে ফেলতে চান?', () => {
+                deleteDoc(doc(db, `${collectionName}/${contributorId}/donations`, donationId)).then(() => {
+                    showToast('অনুদান মুছে ফেলা হয়েছে।');
+                    if (isZakat) {
+                        showZakatContributorDetailsModal(contributorId);
+                    } else {
+                        showContributorDetailsModal(contributorId);
+                    }
+                }).catch(() => showToast('মুছে ফেলতে সমস্যা হয়েছে', true));
+            });
+        };
 
-        window.deleteContributor = (id) => showConfirmModal('নিশ্চিতকরণ', 'এই দাতাকে মুছে ফেললে তার সকল অনুদানের হিসাবও মুছে যাবে। আপনি কি নিশ্চিত?', async () => {
-            const batch = writeBatch(db);
-            const donationsSnapshot = await getDocs(collection(db, `contributors/${id}/donations`));
-            donationsSnapshot.forEach(d => batch.delete(d.ref));
-            batch.delete(doc(db, 'contributors', id));
-            await batch.commit();
-            showToast('দাতাকে মুছে ফেলা হয়েছে।');
-            closeModal();
-        });
+        window.deleteContributor = (id, isZakat = false) => {
+            const collectionName = isZakat ? 'zakat_contributors' : 'contributors';
+            showConfirmModal('নিশ্চিতকরণ', 'এই দাতাকে মুছে ফেললে তার সকল অনুদানের হিসাবও মুছে যাবে। আপনি কি নিশ্চিত?', async () => {
+                const batch = writeBatch(db);
+                const donationsSnapshot = await getDocs(collection(db, `${collectionName}/${id}/donations`));
+                donationsSnapshot.forEach(d => batch.delete(d.ref));
+                batch.delete(doc(db, collectionName, id));
+                await batch.commit();
+                showToast('দাতাকে মুছে ফেলা হয়েছে।');
+                closeModal();
+            });
+        };
         
         window.deleteEventDonation = (eventId, donorId, donationId) => showConfirmModal('নিশ্চিতকরণ', 'আপনি কি এই অনুদানটি মুছে ফেলতে চান?', () => {
             deleteDoc(doc(db, `events/${eventId}/donors/${donorId}/donations`, donationId)).then(() => {
@@ -1573,7 +1810,7 @@
              deleteDoc(doc(db, 'coordinators', id)).then(() => {
                 showToast('সমন্বয়কারীকে মুছে ফেলা হয়েছে।');
                 showCoordinatorModal();
-            }).catch(() => showToast('মুছে ফেলতে সমস্যা হয়েছে', true));
+            }).catch(() => showToast('ত্রুটি হয়েছে', true));
         });
 
         // --- EVENT LISTENERS SETUP ---
@@ -1587,6 +1824,7 @@
                     document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
                     const targetPage = document.getElementById(targetId);
                     if(targetPage) targetPage.classList.remove('hidden');
+                    document.getElementById('back-button').classList.add('hidden');
                 });
             });
 
@@ -1634,7 +1872,8 @@
                       } catch (error) { showToast('আপডেট ব্যর্থ হয়েছে', true); console.error(error); }
                  }
             });
-            document.getElementById('add-contributor-btn')?.addEventListener('click', () => showContributorFormModal());
+            document.getElementById('add-contributor-btn')?.addEventListener('click', () => showContributorFormModal(null, false));
+            document.getElementById('add-zakat-contributor-btn')?.addEventListener('click', () => showContributorFormModal(null, true));
             document.getElementById('add-expense-btn')?.addEventListener('click', () => showExpenseFormModal());
             document.getElementById('add-blood-donor-btn')?.addEventListener('click', () => showBloodDonorFormModal());
             document.getElementById('manage-coordinators-btn')?.addEventListener('click', () => showCoordinatorModal());
@@ -1650,6 +1889,15 @@
                 );
                 renderContributors(filtered);
             });
+            
+            document.getElementById('zakat-contributor-search-input')?.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filtered = allZakatContributors.filter(c => 
+                    c.name.toLowerCase().includes(searchTerm) ||
+                    (c.address && c.address.toLowerCase().includes(searchTerm))
+                );
+                renderZakatContributors(filtered);
+            });
 
             document.getElementById('donor-search-input')?.addEventListener('input', (e) => {
                 const searchTerm = e.target.value.toLowerCase();
@@ -1664,6 +1912,64 @@
             document.getElementById('import-data-btn')?.addEventListener('click', () => document.getElementById('import-file-input').click());
             document.getElementById('import-file-input')?.addEventListener('change', handleImportFile);
 
+            // Swipe Navigation Setup
+            const mainContent = document.querySelector('main');
+            const fundPage = document.getElementById('fund-page');
+
+            let touchStartX = 0;
+            let touchStartY = 0;
+
+            const handleSwipe = (e, tabsSelector) => {
+                const touchEndX = e.changedTouches[0].screenX;
+                const touchEndY = e.changedTouches[0].screenY;
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+
+                if (Math.abs(deltaX) < 50 || Math.abs(deltaX) < Math.abs(deltaY)) {
+                    return; // Ignore vertical scrolls and small horizontal movements
+                }
+                
+                if (e.target.closest('.overflow-y-auto, .overflow-x-auto, input, select, textarea')) return;
+
+                const tabs = Array.from(document.querySelectorAll(tabsSelector)).filter(t => t.offsetParent !== null);
+                const activeIndex = tabs.findIndex(t => t.classList.contains('active'));
+
+                if (activeIndex === -1) return;
+
+                if (deltaX < 0) { // Swipe Left
+                    if (activeIndex < tabs.length - 1) {
+                        tabs[activeIndex + 1].click();
+                    }
+                } else { // Swipe Right
+                    if (activeIndex > 0) {
+                        tabs[activeIndex - 1].click();
+                    }
+                }
+            };
+
+            mainContent.addEventListener('touchstart', e => {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+
+            mainContent.addEventListener('touchend', e => {
+                // This handler is for the main tabs. We check if the event target is inside the fund page,
+                // if so, we let the fund page handler deal with it.
+                if (!e.target.closest('#fund-page')) {
+                     handleSwipe(e, '.main-nav-tab');
+                }
+            }, { passive: true });
+
+            fundPage.addEventListener('touchstart', e => {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+                e.stopPropagation();
+            }, { passive: true });
+
+            fundPage.addEventListener('touchend', e => {
+                handleSwipe(e, '.fund-subtab');
+                e.stopPropagation();
+            }, { passive: true });
         };
 
         // --- DOWNLOAD AND ADMIN FEATURES ---
@@ -1793,7 +2099,7 @@
         const exportAllData = async () => {
             showToast('ডেটা এক্সপোর্ট করা হচ্ছে...');
             const backup = {};
-            const collectionsToBackup = ['contributors', 'donors', 'expenses', 'events', 'coordinators', 'settings'];
+            const collectionsToBackup = ['contributors', 'zakat_contributors', 'donors', 'expenses', 'events', 'coordinators', 'settings'];
 
             for (const colName of collectionsToBackup) {
                 backup[colName] = {};
@@ -1801,8 +2107,8 @@
                 for (const docSnap of snapshot.docs) {
                     backup[colName][docSnap.id] = docSnap.data();
                     // Handle subcollections
-                    if (colName === 'contributors' || colName === 'events') {
-                        const subColName = colName === 'contributors' ? 'donations' : 'donors';
+                    if (colName === 'contributors' || colName === 'events' || colName === 'zakat_contributors') {
+                        const subColName = (colName === 'contributors' || colName === 'zakat_contributors') ? 'donations' : 'donors';
                         backup[colName][docSnap.id][subColName] = {};
                         const subColSnapshot = await getDocs(collection(db, `${colName}/${docSnap.id}/${subColName}`));
                         for (const subDocSnap of subColSnapshot.docs) {
