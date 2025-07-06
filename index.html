@@ -1431,17 +1431,46 @@
 
             let eligibility = '<span class="text-yellow-400">তথ্য নেই</span>';
             let nextDate = '';
-            if (donor.lastDonation) {
-                const lastDonationDate = new Date(donor.lastDonation.seconds * 1000);
-                const nextDonationDate = new Date(lastDonationDate.setMonth(lastDonationDate.getMonth() + 4));
-                if (new Date() > nextDonationDate) {
-                    eligibility = '<span class="text-green-400 font-bold">রক্তদানে প্রস্তুত</span>';
+
+            if (donor.dob) {
+                const dobDate = new Date(donor.dob.seconds * 1000);
+                const today = new Date();
+                const eighteenthBirthday = new Date(dobDate.getFullYear() + 18, dobDate.getMonth(), dobDate.getDate());
+
+                if (today < eighteenthBirthday) {
+                    eligibility = '<span class="text-yellow-400 font-bold">১৮ বছর পূর্ণ হয়নি</span>';
+                    nextDate = `<p><strong>১৮ বছর পূর্ণ হবে:</strong> ${eighteenthBirthday.toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' })}</p>`;
                 } else {
-                    eligibility = '<span class="text-red-400 font-bold">এখন প্রস্তুত নন</span>';
-                    nextDate = `<p><strong>পরবর্তী সম্ভাব্য তারিখ:</strong> ${nextDonationDate.toLocaleDateString('bn-BD')}</p>`;
+                    // Age is >= 18, now check last donation date
+                    if (donor.lastDonation) {
+                        const lastDonationDate = new Date(donor.lastDonation.seconds * 1000);
+                        const nextDonationDate = new Date(new Date(lastDonationDate).setMonth(lastDonationDate.getMonth() + 4));
+                        if (new Date() > nextDonationDate) {
+                            eligibility = '<span class="text-green-400 font-bold">রক্তদানে প্রস্তুত</span>';
+                            nextDate = ''; // Clear nextDate if ready
+                        } else {
+                            eligibility = '<span class="text-red-400 font-bold">এখন প্রস্তুত নন</span>';
+                            nextDate = `<p><strong>পরবর্তী সম্ভাব্য তারিখ:</strong> ${nextDonationDate.toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' })}</p>`;
+                        }
+                    } else {
+                        eligibility = '<span class="text-green-400 font-bold">রক্তদানে প্রস্তুত</span>';
+                        nextDate = '';
+                    }
                 }
             } else {
-                 eligibility = '<span class="text-green-400 font-bold">রক্তদানে প্রস্তুত</span>';
+                // No DOB provided, use old logic for last donation
+                if (donor.lastDonation) {
+                     const lastDonationDate = new Date(donor.lastDonation.seconds * 1000);
+                     const nextDonationDate = new Date(new Date(lastDonationDate).setMonth(lastDonationDate.getMonth() + 4));
+                     if (new Date() > nextDonationDate) {
+                         eligibility = '<span class="text-green-400 font-bold">রক্তদানে প্রস্তুত</span>';
+                     } else {
+                         eligibility = '<span class="text-red-400 font-bold">এখন প্রস্তুত নন</span>';
+                         nextDate = `<p><strong>পরবর্তী সম্ভাব্য তারিখ:</strong> ${nextDonationDate.toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' })}</p>`;
+                     }
+                } else {
+                    eligibility = '<span class="text-green-400 font-bold">রক্তদানে প্রস্তুত</span>';
+                }
             }
 
             const content = `<div class="space-y-2">
