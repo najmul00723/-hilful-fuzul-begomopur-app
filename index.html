@@ -108,7 +108,7 @@
                     <img src="https://i.ibb.co/YBt8qf4x/hilful-fiul-logo-final-2005-001-F.png" alt="লোগো" class="h-12 w-12 rounded-full object-cover">
                     <div>
                         <h1 class="text-lg sm:text-xl md:text-2xl font-bold accent-color">হিলফুল ফুজুল যুব সংঘ বেগমপুর</h1>
-                        <p class="text-xs text-gray-300">"ইসলামের আলোয় আলোকিত হই, মানবতার সেবায় নিবেদিত হই!"</p>
+                        <p class="text-xs text-gray-300">"ইসলামের আলোয় আলোকিত হয়, মানবতার সেবায় নিবেদিত হয়!"</p>
                     </div>
                 </div>
                 <button id="auth-button" class="bg-accent text-white text-xs px-3 py-1.5 sm:text-sm sm:px-4 sm:py-2 rounded-lg hover:bg-amber-600 self-end mt-2 sm:mt-0 sm:self-auto shadow-md hover:shadow-lg transition-all">
@@ -219,7 +219,7 @@
                     </div>
                 </div>
                 <div class="bg-card p-6 rounded-lg shadow-lg text-center mb-6">
-                    <h2 class="text-xl sm:text-2xl font-bold accent-color mb-3">রক্ত দিয়ে জীবন বাঁচান, রক্তদাতা হতে চাইলে আপনার তথ্যসহ পেজে</h2>
+                    <h2 class="text-xl sm:text-2xl font-bold accent-color mb-3">রক্ত দিয়ে জীবন বাঁচান, রক্তদাতা হতে তথ্য দিয়ে সহযোগিতা করুন।</h2>
                     <div class="flex flex-wrap justify-center items-center gap-3 mt-2">
                         <a href="https://www.facebook.com/profile.php?id=61577696172569" target="_blank" class="inline-flex items-center justify-center bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-5 h-5 mr-2 fill-current"><path d="M256.6 8C116.5 8 8 110.3 8 248.6c0 72.3 29.7 134.8 78.1 177.9 8.4 7.5 6.6 11.9 8.1 58.2A19.9 19.9 0 0 0 122 502.3c52.9-23.3 53.6-25.1 62.6-22.7C337.9 521.8 504 423.7 504 248.6 504 110.3 396.6 8 256.6 8zm149.2 185.1l-73 115.6a37.4 37.4 0 0 1 -53.9 9.9l-58.1-43.5a15 15 0 0 0 -18 0l-78.4 59.4c-10.5 7.9-24.2-4.6-17.1-15.7l73-115.6a37.4 37.4 0 0 1 53.9-9.9l58.1 43.5a15 15 0 0 0 18 0l78.4-59.4c10.4-8 24.1 4.5 17.1 15.6z"/></svg>
@@ -353,8 +353,7 @@
         const dateToInputFormat = (date) => date ? new Date(date.seconds * 1000).toISOString().split('T')[0] : '';
 
         const closeModal = () => {
-            const modal = document.querySelector('.modal-backdrop');
-            if (modal) modal.remove();
+            document.querySelectorAll('.modal-backdrop').forEach(m => m.remove());
         };
 
         const createModal = (title, content, footer) => {
@@ -890,6 +889,17 @@
                 </table>`;
             }
 
+            const addNewDetailForm = `
+                <div class="admin-only mt-4 pt-4 border-t border-gray-600" style="display:none;">
+                    <h5 class="font-bold text-md mb-2">নতুন বিস্তারিত যোগ করুন</h5>
+                    <div class="flex gap-2">
+                        <input type="text" id="new-detail-name" placeholder="পণ্যের নাম" class="w-full bg-gray-700 p-2 rounded-lg" required>
+                        <input type="number" id="new-detail-price" placeholder="টাকা" class="w-1/3 bg-gray-700 p-2 rounded-lg" required>
+                        <button type="button" id="add-new-detail-btn" class="bg-blue-600 text-white px-3 rounded-lg flex-shrink-0"><i data-lucide="plus"></i></button>
+                    </div>
+                </div>
+            `;
+
             const content = `
                 <div class="space-y-2">
                     <p><strong>বিবরণ:</strong> ${expense.description}</p>
@@ -899,11 +909,46 @@
                     <hr class="border-gray-600 my-2">
                     <h4 class="font-bold text-lg">বিস্তারিত</h4>
                     <div class="max-h-60 overflow-y-auto">${detailsHtml}</div>
+                    ${addNewDetailForm}
                 </div>
             `;
             createModal('বিস্তারিত খরচের ইতিহাস', content, '');
             lucide.createIcons();
             updateUIVisibility();
+
+            const addNewDetailBtn = document.getElementById('add-new-detail-btn');
+            if (addNewDetailBtn) {
+                addNewDetailBtn.onclick = async () => {
+                    const nameInput = document.getElementById('new-detail-name');
+                    const priceInput = document.getElementById('new-detail-price');
+                    const name = nameInput.value.trim();
+                    const price = Number(priceInput.value);
+
+                    if (!name || price <= 0) {
+                        showToast('সঠিক নাম এবং মূল্য দিন।', true);
+                        return;
+                    }
+
+                    try {
+                        await addDoc(collection(db, `expenses/${expenseId}/details`), { name, price });
+                        
+                        const detailsCollectionRef = collection(db, `expenses/${expenseId}/details`);
+                        const allDetailsSnap = await getDocs(detailsCollectionRef);
+                        const newTotalAmount = allDetailsSnap.docs.reduce((sum, doc) => sum + doc.data().price, 0);
+
+                        await updateDoc(doc(db, 'expenses', expenseId), { amount: newTotalAmount });
+
+                        showToast('নতুন বিবরণ যোগ হয়েছে!');
+                        
+                        closeModal();
+                        window.viewExpenseDetails(expenseId);
+
+                    } catch (e) {
+                        showToast('বিবরণ যোগ করতে সমস্যা হয়েছে।', true);
+                        console.error(e);
+                    }
+                };
+            }
         };
 
         window.editExpenseDetail = async (expenseId, detailId) => {
@@ -932,20 +977,17 @@
                 }
 
                 try {
-                    // Update the detail document
                     await updateDoc(doc(db, `expenses/${expenseId}/details`, detailId), { name: newName, price: newPrice });
 
-                    // Recalculate total expense
                     const detailsCollectionRef = collection(db, `expenses/${expenseId}/details`);
                     const allDetailsSnap = await getDocs(detailsCollectionRef);
                     const newTotalAmount = allDetailsSnap.docs.reduce((sum, doc) => sum + doc.data().price, 0);
                     
-                    // Update the main expense document
                     await updateDoc(doc(db, 'expenses', expenseId), { amount: newTotalAmount });
 
                     showToast('বিবরণ আপডেট হয়েছে!');
-                    closeModal(); // Close the edit modal
-                    window.viewExpenseDetails(expenseId); // Refresh the main details view
+                    closeModal(); 
+                    window.viewExpenseDetails(expenseId);
                 } catch (e) {
                     showToast('আপডেট করতে সমস্যা হয়েছে।', true);
                     console.error(e);
@@ -956,19 +998,17 @@
         window.deleteExpenseDetail = (expenseId, detailId) => {
             showConfirmModal('নিশ্চিতকরণ', 'আপনি কি এই ব্যয়ের বিবরণটি মুছে ফেলতে চান?', async () => {
                 try {
-                    // Delete the detail document
                     await deleteDoc(doc(db, `expenses/${expenseId}/details`, detailId));
 
-                    // Recalculate total expense
                     const detailsCollectionRef = collection(db, `expenses/${expenseId}/details`);
                     const allDetailsSnap = await getDocs(detailsCollectionRef);
                     const newTotalAmount = allDetailsSnap.docs.reduce((sum, doc) => sum + doc.data().price, 0);
 
-                    // Update the main expense document
                     await updateDoc(doc(db, 'expenses', expenseId), { amount: newTotalAmount });
 
                     showToast('বিবরণ মুছে ফেলা হয়েছে।');
-                    window.viewExpenseDetails(expenseId); // Refresh the main details view
+                    closeModal();
+                    window.viewExpenseDetails(expenseId);
                 } catch (e) {
                     showToast('মুছে ফেলতে সমস্যা হয়েছে।', true);
                     console.error(e);
@@ -1005,16 +1045,92 @@
             listEl.innerHTML = '';
             events.forEach(event => {
                 const card = document.createElement('div');
-                card.className = 'bg-card p-4 rounded-lg shadow hover:shadow-lg hover:border-accent border border-transparent transition-all cursor-pointer flex flex-col justify-between';
+                card.className = 'bg-card p-4 rounded-lg shadow hover:shadow-lg hover:border-accent border border-transparent transition-all flex flex-col justify-between';
                 card.innerHTML = `
-                    <div>
+                    <div class="flex-grow cursor-pointer" onclick="window.showEventDetailsView('${event.id}')">
                         <h3 class="text-xl font-bold accent-color">${event.name}</h3>
                         <p class="text-gray-400 text-sm">${formatDate(event.date)}</p>
+                        <p class="mt-3 text-lg font-semibold">মোট অনুদান: ${formatCurrency(event.totalDonation)}</p>
                     </div>
-                    <p class="mt-3 text-lg font-semibold">মোট অনুদান: ${formatCurrency(event.totalDonation)}</p>
+                    <div class="admin-only flex items-center justify-end gap-2 pt-3 mt-3 border-t border-gray-700/50" style="display: none;">
+                        <button class="text-blue-400 hover:text-blue-300 p-1" onclick="event.stopPropagation(); window.showEditEventModal('${event.id}')">
+                            <i data-lucide="edit" class="w-5 h-5"></i>
+                        </button>
+                        <button class="text-red-500 hover:text-red-400 p-1" onclick="event.stopPropagation(); window.deleteEvent('${event.id}')">
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </button>
+                    </div>
                 `;
-                card.onclick = () => showEventDetailsView(event.id);
                 listEl.appendChild(card);
+            });
+            lucide.createIcons();
+            updateUIVisibility();
+        };
+
+        window.showEditEventModal = async (eventId) => {
+            const eventSnap = await getDoc(doc(db, 'events', eventId));
+            if (!eventSnap.exists()) {
+                showToast('ইভেন্টটি পাওয়া যায়নি।', true);
+                return;
+            }
+            const eventData = eventSnap.data();
+
+            const content = `<form id="edit-event-form" class="space-y-4">
+                <input type="text" id="eventName" placeholder="ইভেন্টের নাম" class="w-full bg-card-light p-3 rounded-lg" value="${eventData.name}" required>
+                <input type="date" id="eventDate" class="w-full bg-card-light p-3 rounded-lg" value="${dateToInputFormat(eventData.date)}" required>
+            </form>`;
+            const footer = `<button id="update-event-btn" class="bg-accent text-white px-6 py-2 rounded-lg">আপডেট করুন</button>`;
+            
+            createModal('ইভেন্ট এডিট করুন', content, footer);
+            
+            document.getElementById('update-event-btn').onclick = async () => {
+                const form = document.getElementById('edit-event-form');
+                if(!form.checkValidity()) return form.reportValidity();
+                
+                const updatedData = {
+                    name: form.eventName.value,
+                    date: Timestamp.fromDate(new Date(form.eventDate.value)),
+                };
+
+                try {
+                    await updateDoc(doc(db, 'events', eventId), updatedData);
+                    showToast('ইভেন্ট আপডেট হয়েছে!');
+                    closeModal();
+                } catch (e) {
+                    showToast('আপডেট করতে সমস্যা হয়েছে', true);
+                    console.error(e);
+                }
+            };
+        };
+
+        window.deleteEvent = (eventId) => {
+            showConfirmModal('নিশ্চিতকরণ', 'এই ইভেন্টটি মুছে ফেললে এর সাথে সম্পর্কিত সকল দাতা এবং তাদের অনুদানের হিসাবও মুছে যাবে। আপনি কি নিশ্চিত?', async () => {
+                showToast('ইভেন্ট মুছে ফেলা হচ্ছে...');
+                try {
+                    const batch = writeBatch(db);
+                    const eventRef = doc(db, 'events', eventId);
+                    
+                    // Delete all donors and their donations within the event
+                    const donorsSnapshot = await getDocs(collection(db, `events/${eventId}/donors`));
+                    for (const donorDoc of donorsSnapshot.docs) {
+                        // Delete donations for each donor
+                        const donationsSnapshot = await getDocs(collection(db, `events/${eventId}/donors/${donorDoc.id}/donations`));
+                        donationsSnapshot.forEach(donationDoc => {
+                            batch.delete(donationDoc.ref);
+                        });
+                        // Delete the donor
+                        batch.delete(donorDoc.ref);
+                    }
+                    
+                    // Delete the event itself
+                    batch.delete(eventRef);
+                    
+                    await batch.commit();
+                    showToast('ইভেন্ট সফলভাবে মুছে ফেলা হয়েছে।', false);
+                } catch (error) {
+                    showToast('ইভেন্ট মুছতে সমস্যা হয়েছে।', true);
+                    console.error("Error deleting event:", error);
+                }
             });
         };
 
@@ -1044,7 +1160,7 @@
             };
         };
 
-        const showEventDetailsView = async (eventId) => {
+        window.showEventDetailsView = async (eventId) => {
             document.getElementById('events-list-view').classList.add('hidden');
             const detailsView = document.getElementById('event-details-view');
             const eventSnap = await getDoc(doc(db, 'events', eventId));
@@ -1148,13 +1264,13 @@
             };
         };
 
-        const showEventDonorDetailsModal = async (eventId, donorId) => {
+        window.showEventDonorDetailsModal = async (eventId, donorId) => {
              const donorSnap = await getDoc(doc(db, `events/${eventId}/donors`, donorId));
             const donor = { id: donorSnap.id, ...donorSnap.data() };
             const donationsSnapshot = await getDocs(query(collection(db, `events/${eventId}/donors/${donor.id}/donations`), orderBy("date", "desc")));
             const donations = donationsSnapshot.docs.map(d => ({id: d.id, ...d.data()}));
             
-            let donationsHtml = `<table class="w-full text-left"><thead><tr><th class="p-2">তারিখ</th><th class="p-2 text-right">পরিমাণ</th><th class="p-2 text-center admin-only" style="display: none;"></th></tr></thead><tbody>${donations.map(d => `<tr><td class="p-2">${formatDate(d.date)}</td><td class="p-2 text-right">${formatCurrency(d.amount)}</td><td class="p-2 text-center admin-only" style="display: none;"><button onclick="window.deleteEventDonation('${eventId}', '${donor.id}', '${d.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('') || '<tr><td colspan="3" class="text-center p-4">কোনো অনুদান নেই।</td></tr>'}</tbody></table>`;
+            let donationsHtml = `<table class="w-full text-left"><thead><tr><th class="p-2">তারিখ</th><th class="p-2 text-right">পরিমাণ</th><th class="p-2 text-center admin-only" style="display: none;">অ্যাকশন</th></tr></thead><tbody>${donations.map(d => `<tr><td class="p-2">${formatDate(d.date)}</td><td class="p-2 text-right">${formatCurrency(d.amount)}</td><td class="p-2 text-center admin-only" style="display: none;"><button class="text-blue-400 hover:text-blue-300 mr-2" onclick="window.editEventDonation('${eventId}', '${donor.id}', '${d.id}')"><i data-lucide="edit" class="w-4 h-4"></i></button><button onclick="window.deleteEventDonation('${eventId}', '${donor.id}', '${d.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('') || '<tr><td colspan="3" class="text-center p-4">কোনো অনুদান নেই।</td></tr>'}</tbody></table>`;
 
             const phoneHTML = donor.phone 
                 ? `<p class="admin-only" style="display: none;"><strong>ফোন:</strong> <a href="tel:${donor.phone}" class="text-accent hover:underline">${donor.phone}</a></p>` 
@@ -1179,6 +1295,46 @@
             document.getElementById('add-new-event-donation-btn').onclick = () => showEventDonationFormModal(eventId, donor.id, () => showEventDonorDetailsModal(eventId, donor.id));
             document.getElementById('edit-event-donor-btn').onclick = () => showEventDonorFormModal(eventId, donor.id);
             document.getElementById('delete-event-donor-btn').onclick = () => window.deleteEventDonor(eventId, donor.id);
+        };
+        
+        window.editEventDonation = async (eventId, donorId, donationId) => {
+            const donationSnap = await getDoc(doc(db, `events/${eventId}/donors/${donorId}/donations`, donationId));
+            if (!donationSnap.exists()) {
+                showToast('অনুদানটি পাওয়া যায়নি।', true);
+                return;
+            }
+            const donationData = donationSnap.data();
+
+            const content = `<form id="edit-event-donation-form" class="space-y-4">
+                <input type="number" id="edit-donation-amount" placeholder="পরিমাণ" class="w-full bg-card-light p-3 rounded-lg" value="${donationData.amount}" required>
+                <input type="date" id="edit-donation-date" class="w-full bg-card-light p-3 rounded-lg" value="${dateToInputFormat(donationData.date)}" required>
+            </form>`;
+            const footer = `<button id="update-event-donation-btn" class="bg-accent text-white px-6 py-2 rounded-lg">আপডেট করুন</button>`;
+
+            createModal('অনুদান এডিট করুন', content, footer);
+
+            document.getElementById('update-event-donation-btn').onclick = async () => {
+                const newAmount = Number(document.getElementById('edit-donation-amount').value);
+                const newDate = document.getElementById('edit-donation-date').value;
+
+                if (newAmount <= 0 || !newDate) {
+                    showToast('সঠিক পরিমাণ এবং তারিখ দিন।', true);
+                    return;
+                }
+
+                try {
+                    await updateDoc(doc(db, `events/${eventId}/donors/${donorId}/donations`, donationId), {
+                        amount: newAmount,
+                        date: Timestamp.fromDate(new Date(newDate))
+                    });
+                    showToast('অনুদান আপডেট হয়েছে!');
+                    closeModal();
+                    showEventDonorDetailsModal(eventId, donorId); // Refresh the details modal
+                } catch (e) {
+                    showToast('আপডেট করতে সমস্যা হয়েছে।', true);
+                    console.error(e);
+                }
+            };
         };
         
         const showEventDonationFormModal = (eventId, donorId, onSaveCallback) => {
