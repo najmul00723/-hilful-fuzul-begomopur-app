@@ -9,7 +9,7 @@
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
         font-src 'self' https://fonts.gstatic.com data:;
         connect-src *;">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>হিলফুল ফুজুল যুব সংঘ - Begompur</title>
 
     
@@ -104,30 +104,36 @@
         }
         /* Pull to Refresh Styles */
         #pull-to-refresh {
-            position: absolute;
-            top: -60px;
-            left: 0;
-            right: 0;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #f59e0b;
-            transition: transform 0.2s;
-            z-index: 30;
-            pointer-events: none;
-        }
-        #pull-to-refresh .icon {
-            transition: transform 0.2s;
-        }
-        #pull-to-refresh.refreshing .icon {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
+    position: absolute;
+    top: -50px;
+    left: 0;
+    right: 0;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #f59e0b;
+    transition: transform 0.2s;
+    z-index: 30;
+    pointer-events: none;
+}
+#pull-to-refresh .icon {
+    transition: transform 0.2s;
+}
+#pull-to-refresh.refreshing .icon {
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
 
+/* মেইন কন্টেন্টের জন্য স্ক্রল স্টাইল */
+main {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    height: calc(100vh - 140px); /* হেডার এবং ফুটারের উচ্চতা বিবেচনা করে */
+}
         /* স্টার রেটিং স্টাইল */
 .star-btn {
     transition: all 0.2s ease-in-out;
@@ -2874,6 +2880,12 @@ const canViewDonorPhone = () => {
         if(targetPage) targetPage.classList.remove('hidden');
         document.getElementById('back-button').classList.add('hidden');
 
+         // স্ক্রল ইভেন্ট লিসেনার যোগ করুন
+    const mainContent = document.querySelector('main');
+    if (mainContent) {
+        mainContent.addEventListener('scroll', handleScroll);
+    }
+
         // Save current tab state
         currentState.activeTab = clickedTab.dataset.tab;
         currentState.eventDetailsView = false;
@@ -3416,6 +3428,19 @@ const restoreUIState = () => {
         }, 200);
     }
 };
+
+    // স্ক্রল ইভেন্ট হ্যান্ডলার
+const handleScroll = () => {
+    const mainContent = document.querySelector('main');
+    if (mainContent.scrollTop > 10) {
+        // ইউজার স্ক্রল করলে পুল টু রিফ্রESH ডিজেবল থাকবে
+        document.getElementById('pull-to-refresh').style.display = 'none';
+    } else {
+        document.getElementById('pull-to-refresh').style.display = 'flex';
+    }
+};
+
+
         // --- DOWNLOAD AND ADMIN FEATURES ---
         
         /**
@@ -3754,9 +3779,10 @@ const restoreUIState = () => {
     let isPulling = false;
     const threshold = 70;
 
+    // শুধুমাত্র যখন সম্পূর্ণ উপরে থাকবে তখনই পুল টু রিফ্রেশ এক্টিভ হবে
     const isScrolledToTop = () => {
-    return mainContent.scrollTop === 0; // শুধুমাত্র সম্পূর্ণ উপরে থাকলে true রিটার্ন করবে
-};
+        return mainContent.scrollTop === 0;
+    };
 
     const resetPtr = () => {
         ptr.style.transition = 'transform 0.3s';
@@ -3772,26 +3798,29 @@ const restoreUIState = () => {
     };
 
     mainContent.addEventListener('touchstart', (e) => {
-        // শুধুমাত্র যখন কন্টেন্ট একদম উপরে থাকে তখনই পুল টু রিফ্রেশ শুরু হবে
+        // শুধুমাত্র যখন সম্পূর্ণ উপরে থাকবে তখনই টাচ শুরু করবে
         if (isScrolledToTop()) {
             startY = e.touches[0].pageY;
             isPulling = true;
             ptr.style.transition = '';
+        } else {
+            isPulling = false;
         }
     }, { passive: true });
 
     mainContent.addEventListener('touchmove', (e) => {
-        // শুধুমাত্র পুল টু রিফ্রেশ সক্রিয় থাকলে এবং উপরে স্ক্রল করা থাকলে প্রক্রিয়া করুন
-        if (!isPulling || !isScrolledToTop()) return;
+        if (!isPulling) return;
 
         const currentY = e.touches[0].pageY;
         diffY = currentY - startY;
 
-        // শুধুমাত্র নিচের দিকে টান দিলে (ধনাত্মক diffY) প্রক্রিয়া করুন
+        // শুধুমাত্র নিচের দিকে স্ক্রল করলে কাজ করবে
         if (diffY > 0) {
             e.preventDefault();
-            ptr.style.transform = `translateY(${diffY}px)`;
-            ptrIcon.style.transform = `rotate(${diffY * 2}deg)`;
+            
+            // পুল টু রিফ্রESH ইন্ডিকেটর আপডেট
+            ptr.style.transform = `translateY(${Math.min(diffY, 100)}px)`;
+            ptrIcon.style.transform = `rotate(${Math.min(diffY * 2, 180)}deg)`;
             
             if (diffY > threshold && !ptr.classList.contains('ready')) {
                 ptr.classList.add('ready');
@@ -3803,7 +3832,7 @@ const restoreUIState = () => {
                 lucide.createIcons();
             }
         } else {
-            // উপরের দিকে টান দিলে পুল টু রিফ্রেশ বন্ধ করুন
+            // উপরের দিকে স্ক্রল করলে পুল টু রিফ্রESH বাতিল
             isPulling = false;
             resetPtr();
         }
@@ -3845,7 +3874,7 @@ const restoreUIState = () => {
         diffY = 0;
     });
 
-    // স্ক্রল ইভেন্ট যোগ করুন - স্ক্রল করার সময় পুল টু রিফ্রেশ রিসেট করুন
+    // স্ক্রল ইভেন্ট লিসেনার যোগ করুন - স্ক্রল করলে পুল টু রিফ্রESH রিসেট হবে
     mainContent.addEventListener('scroll', () => {
         if (!isScrolledToTop() && isPulling) {
             isPulling = false;
