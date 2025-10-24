@@ -106,31 +106,38 @@
        /* Improved Pull to Refresh Styles */
 #pull-to-refresh {
     position: fixed;
-    top: -50px;
+    top: -60px;
     left: 0;
     right: 0;
-    height: 50px;
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #f59e0b;
-    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: transform 0.3s ease-out;
     z-index: 9999;
     pointer-events: none;
-    background: linear-gradient(to bottom, rgba(17, 24, 39, 0.9) 0%, transparent 100%);
-    backdrop-filter: blur(5px);
+    background: linear-gradient(to bottom, rgba(17, 24, 39, 0.95) 0%, transparent 100%);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(245, 158, 11, 0.2);
 }
 
 #pull-to-refresh .icon {
-    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-    background: rgba(17, 24, 39, 0.8);
+    transition: transform 0.3s ease-out;
+    background: rgba(17, 24, 39, 0.9);
     border-radius: 50%;
-    padding: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    padding: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(245, 158, 11, 0.3);
 }
 
 #pull-to-refresh.refreshing .icon {
     animation: spin 1s linear infinite;
+}
+
+#pull-to-refresh.ready .icon {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
 }
 
 @keyframes spin {
@@ -138,27 +145,30 @@
     to { transform: rotate(360deg); }
 }
 
-/* Prevent body scroll when pulling to refresh */
-body.ptr-active {
-    overflow: hidden;
-}
-
-/* Main content overflow handling */
+/* Main content scroll area */
 main {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     height: calc(100vh - 140px);
+    scroll-behavior: smooth;
 }
 
-/* Better scroll experience */
-.tab-content {
-    overflow-y: auto;
-    max-height: calc(100vh - 200px);
+/* Better scrollbars for webkit browsers */
+main::-webkit-scrollbar {
+    width: 6px;
 }
 
-/* Improve touch scrolling */
-.container {
-    -webkit-overflow-scrolling: touch;
+main::-webkit-scrollbar-track {
+    background: #1f2937;
+}
+
+main::-webkit-scrollbar-thumb {
+    background: #f59e0b;
+    border-radius: 3px;
+}
+
+main::-webkit-scrollbar-thumb:hover {
+    background: #d97706;
 }
 
         /* স্টার রেটিং স্টাইল */
@@ -242,7 +252,8 @@ main {
         </header>
 
         <!-- Main Content -->
-        <main class="container mx-auto p-4 md:p-6 flex-grow relative" style="overflow-y: auto; height: calc(100vh - 140px); -webkit-overflow-scrolling: touch;">
+        <main class="container mx-auto p-4 md:p-6 flex-grow relative" 
+      style="overflow-y: auto; height: calc(100vh - 140px); -webkit-overflow-scrolling: touch;">
             <!-- Pull to Refresh Indicator -->
             <div id="pull-to-refresh">
                 <div class="icon">
@@ -697,6 +708,7 @@ let isCoordinator = false;
 // --- AUTHENTICATION & CORE APP SETUP ---
 const initializeAppLogic = () => {
     setupEventListeners();
+    initEnhancedScroll();
     
     // Load current state first
     loadCurrentState();
@@ -3475,6 +3487,19 @@ document.addEventListener('touchend', () => {
         isScrolling = false;
     }, 100);
 }, { passive: true });
+
+// Improved scroll prevention for pull-to-refresh
+document.addEventListener('touchmove', (e) => {
+    const mainContent = document.querySelector('main');
+    const scrollTop = mainContent.scrollTop;
+    const scrollHeight = mainContent.scrollHeight;
+    const clientHeight = mainContent.clientHeight;
+    
+    // Allow normal scrolling in the middle of content
+    if (scrollTop > 0 && scrollTop + clientHeight < scrollHeight - 10) {
+        return; // Normal scroll, don't prevent
+    }
+}, { passive: true });
         // --- DOWNLOAD AND ADMIN FEATURES ---
         
         /**
@@ -3809,21 +3834,31 @@ document.addEventListener('touchend', () => {
     const ptrIcon = ptr.querySelector('.icon');
     
     let startY = 0;
-    let diffY = 0;
+    let currentY = 0;
     let isPulling = false;
-    const threshold = 100; // Increased threshold for better UX
-    const maxPull = 150; // Maximum pull distance
+    let isAtTop = false;
+    let isAtBottom = false;
+    
+    const threshold = 80; // Pull distance required to trigger refresh
+    const maxPull = 120; // Maximum pull distance
 
-    // More strict check for top position
-    const isScrolledToTop = () => {
-        return mainContent.scrollTop <= 1;
+    // Check if scrolled to top
+    const checkScrollPosition = () => {
+        const scrollTop = mainContent.scrollTop;
+        const scrollHeight = mainContent.scrollHeight;
+        const clientHeight = mainContent.clientHeight;
+        
+        isAtTop = scrollTop === 0;
+        isAtBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 2;
+        
+        return { isAtTop, isAtBottom };
     };
 
+    // Reset PTR to hidden state
     const resetPtr = () => {
-        ptr.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
-        ptr.style.transform = 'translateY(-50px)';
+        ptr.style.transition = 'transform 0.3s ease-out';
+        ptr.style.transform = 'translateY(-60px)';
         ptr.classList.remove('refreshing', 'ready');
-        ptrIcon.style.transform = 'rotate(0deg)';
         ptrIcon.innerHTML = `<i data-lucide="arrow-down"></i>`;
         lucide.createIcons();
         
@@ -3832,13 +3867,20 @@ document.addEventListener('touchend', () => {
         }, 300);
     };
 
-    // Initialize PTR position
+    // Initialize PTR position (hidden)
     resetPtr();
 
+    mainContent.addEventListener('scroll', () => {
+        checkScrollPosition();
+    });
+
     mainContent.addEventListener('touchstart', (e) => {
-        // Only activate if at the very top of the page
-        if (isScrolledToTop()) {
+        // Only activate if at the very top or bottom
+        const { isAtTop, isAtBottom } = checkScrollPosition();
+        
+        if (isAtTop || isAtBottom) {
             startY = e.touches[0].pageY;
+            currentY = startY;
             isPulling = true;
             ptr.style.transition = '';
         }
@@ -3847,36 +3889,49 @@ document.addEventListener('touchend', () => {
     mainContent.addEventListener('touchmove', (e) => {
         if (!isPulling) return;
 
-        const currentY = e.touches[0].pageY;
-        diffY = currentY - startY;
+        currentY = e.touches[0].pageY;
+        const diffY = currentY - startY;
 
-        // Only activate if pulling down (positive diffY)
-        if (diffY > 0) {
-            // Calculate pull distance with resistance
-            const pullDistance = Math.min(diffY * 0.6, maxPull);
+        // Determine pull direction and validity
+        const { isAtTop, isAtBottom } = checkScrollPosition();
+        const isPullDown = diffY > 0 && isAtTop;
+        const isPullUp = diffY < 0 && isAtBottom;
+
+        if (!isPullDown && !isPullUp) {
+            // Not a valid pull for refresh, cancel
+            isPulling = false;
+            resetPtr();
+            return;
+        }
+
+        // Calculate effective pull distance with resistance
+        const effectivePull = Math.min(Math.abs(diffY) * 0.6, maxPull);
+        
+        if (isPullDown) {
+            // Pull down from top
+            ptr.style.transform = `translateY(${effectivePull - 60}px)`;
+            ptrIcon.style.transform = `rotate(${effectivePull * 2}deg)`;
             
-            ptr.style.transform = `translateY(${pullDistance - 50}px)`;
-            ptrIcon.style.transform = `rotate(${pullDistance * 2}deg)`;
-            
-            // Update icon and state based on threshold
-            if (pullDistance > threshold && !ptr.classList.contains('ready')) {
+            if (effectivePull > threshold && !ptr.classList.contains('ready')) {
                 ptr.classList.add('ready');
                 ptrIcon.innerHTML = `<i data-lucide="arrow-up"></i>`;
                 lucide.createIcons();
-            } else if (pullDistance <= threshold && ptr.classList.contains('ready')) {
+            } else if (effectivePull <= threshold && ptr.classList.contains('ready')) {
                 ptr.classList.remove('ready');
                 ptrIcon.innerHTML = `<i data-lucide="arrow-down"></i>`;
                 lucide.createIcons();
             }
-
-            // Only prevent default when we're actively pulling to refresh
-            if (pullDistance > 10) {
-                e.preventDefault();
-            }
-        } else {
-            // If scrolling up, cancel pull to refresh
+        } else if (isPullUp) {
+            // Pull up from bottom (optional - you can enable/disable this)
+            // Currently disabled to avoid confusion
             isPulling = false;
             resetPtr();
+            return;
+        }
+
+        // Only prevent default when we're actively pulling to refresh beyond a small threshold
+        if (Math.abs(diffY) > 10) {
+            e.preventDefault();
         }
     }, { passive: false });
 
@@ -3884,49 +3939,57 @@ document.addEventListener('touchend', () => {
         if (!isPulling) return;
         
         isPulling = false;
+        const diffY = currentY - startY;
+        const { isAtTop, isAtBottom } = checkScrollPosition();
         
-        if (diffY > threshold) {
-            // Trigger refresh
-            showToast('ডেটা রিফ্রেশ হচ্ছে...');
-            ptr.classList.add('refreshing');
-            ptr.style.transition = 'transform 0.3s';
-            ptr.style.transform = 'translateY(0px)';
-            ptrIcon.style.transform = 'rotate(0deg)';
-            ptrIcon.innerHTML = `<i data-lucide="loader-circle"></i>`;
-            lucide.createIcons();
+        const isPullDown = diffY > 0 && isAtTop;
+        const effectivePull = Math.min(Math.abs(diffY) * 0.6, maxPull);
 
-            // Clear cache and reload data
-            setTimeout(() => {
-                Object.keys(localStorage).forEach(key => {
-                    if (key.startsWith(LS_PREFIX)) {
-                        localStorage.removeItem(key);
-                    }
-                });
-                
-                // Reload all data
-                loadAllData(true);
-
-                setTimeout(() => {
-                    resetPtr();
-                    showToast('ডেটা সফলভাবে রিফ্রেশ হয়েছে!', false);
-                }, 1000);
-            }, 500);
-
+        if (isPullDown && effectivePull > threshold) {
+            // Trigger refresh from top
+            triggerRefresh();
         } else {
             // Reset if not pulled enough
             resetPtr();
         }
-
-        diffY = 0;
     });
 
-    // Cancel pull to refresh if touch is cancelled
     mainContent.addEventListener('touchcancel', () => {
         if (isPulling) {
             isPulling = false;
             resetPtr();
         }
     });
+
+    const triggerRefresh = () => {
+        showToast('ডেটা রিফ্রেশ হচ্ছে...');
+        ptr.classList.add('refreshing');
+        ptr.style.transition = 'transform 0.3s';
+        ptr.style.transform = 'translateY(0px)';
+        ptrIcon.style.transform = 'rotate(0deg)';
+        ptrIcon.innerHTML = `<i data-lucide="loader-circle"></i>`;
+        lucide.createIcons();
+
+        // Clear cache and reload data
+        setTimeout(() => {
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith(LS_PREFIX)) {
+                    localStorage.removeItem(key);
+                }
+            });
+            
+            // Reload all data
+            loadAllData(true);
+
+            setTimeout(() => {
+                resetPtr();
+                showToast('ডেটা সফলভাবে রিফ্রেশ হয়েছে!', false);
+            }, 1000);
+        }, 500);
+    };
+
+    // Initial scroll position check
+    checkScrollPosition();
 };
     // সুপার অ্যাডমিন তৈরি করার ফাংশন
 const createSuperAdmin = async (email, password) => {
