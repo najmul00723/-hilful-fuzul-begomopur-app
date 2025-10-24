@@ -103,73 +103,30 @@
             filter: brightness(1.1);
         }
         /* Pull to Refresh Styles */
-       /* Improved Pull to Refresh Styles */
-#pull-to-refresh {
-    position: fixed;
-    top: -60px;
-    left: 0;
-    right: 0;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #f59e0b;
-    transition: transform 0.3s ease-out;
-    z-index: 9999;
-    pointer-events: none;
-    background: linear-gradient(to bottom, rgba(17, 24, 39, 0.95) 0%, transparent 100%);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid rgba(245, 158, 11, 0.2);
-}
-
-#pull-to-refresh .icon {
-    transition: transform 0.3s ease-out;
-    background: rgba(17, 24, 39, 0.9);
-    border-radius: 50%;
-    padding: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    border: 2px solid rgba(245, 158, 11, 0.3);
-}
-
-#pull-to-refresh.refreshing .icon {
-    animation: spin 1s linear infinite;
-}
-
-#pull-to-refresh.ready .icon {
-    border-color: #f59e0b;
-    background: rgba(245, 158, 11, 0.1);
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* Main content scroll area */
-main {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    height: calc(100vh - 140px);
-    scroll-behavior: smooth;
-}
-
-/* Better scrollbars for webkit browsers */
-main::-webkit-scrollbar {
-    width: 6px;
-}
-
-main::-webkit-scrollbar-track {
-    background: #1f2937;
-}
-
-main::-webkit-scrollbar-thumb {
-    background: #f59e0b;
-    border-radius: 3px;
-}
-
-main::-webkit-scrollbar-thumb:hover {
-    background: #d97706;
-}
+        #pull-to-refresh {
+            position: absolute;
+            top: -60px;
+            left: 0;
+            right: 0;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f59e0b;
+            transition: transform 0.2s;
+            z-index: 30;
+            pointer-events: none;
+        }
+        #pull-to-refresh .icon {
+            transition: transform 0.2s;
+        }
+        #pull-to-refresh.refreshing .icon {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
 
         /* স্টার রেটিং স্টাইল */
 .star-btn {
@@ -209,7 +166,7 @@ main::-webkit-scrollbar-thumb:hover {
     
     
 </head>
-<body class="antialiased" style="overflow: hidden;">
+<body class="antialiased">
      <div class="hidden">
     <span class="text-green-400"></span>
     <span class="text-red-400"></span>
@@ -252,8 +209,7 @@ main::-webkit-scrollbar-thumb:hover {
         </header>
 
         <!-- Main Content -->
-        <main class="container mx-auto p-4 md:p-6 flex-grow relative" 
-      style="overflow-y: auto; height: calc(100vh - 140px); -webkit-overflow-scrolling: touch;">
+        <main class="container mx-auto p-4 md:p-6 flex-grow relative">
             <!-- Pull to Refresh Indicator -->
             <div id="pull-to-refresh">
                 <div class="icon">
@@ -708,7 +664,6 @@ let isCoordinator = false;
 // --- AUTHENTICATION & CORE APP SETUP ---
 const initializeAppLogic = () => {
     setupEventListeners();
-    initEnhancedScroll();
     
     // Load current state first
     loadCurrentState();
@@ -3461,45 +3416,6 @@ const restoreUIState = () => {
         }, 200);
     }
 };
-
-// Improved touch event handling for better scroll experience
-let lastTouchY = 0;
-let isScrolling = false;
-
-document.addEventListener('touchstart', (e) => {
-    lastTouchY = e.touches[0].clientY;
-    isScrolling = false;
-}, { passive: true });
-
-document.addEventListener('touchmove', (e) => {
-    const currentY = e.touches[0].clientY;
-    const deltaY = Math.abs(currentY - lastTouchY);
-    
-    if (deltaY > 5) {
-        isScrolling = true;
-    }
-    
-    lastTouchY = currentY;
-}, { passive: true });
-
-document.addEventListener('touchend', () => {
-    setTimeout(() => {
-        isScrolling = false;
-    }, 100);
-}, { passive: true });
-
-// Improved scroll prevention for pull-to-refresh
-document.addEventListener('touchmove', (e) => {
-    const mainContent = document.querySelector('main');
-    const scrollTop = mainContent.scrollTop;
-    const scrollHeight = mainContent.scrollHeight;
-    const clientHeight = mainContent.clientHeight;
-    
-    // Allow normal scrolling in the middle of content
-    if (scrollTop > 0 && scrollTop + clientHeight < scrollHeight - 10) {
-        return; // Normal scroll, don't prevent
-    }
-}, { passive: true });
         // --- DOWNLOAD AND ADMIN FEATURES ---
         
         /**
@@ -3834,31 +3750,19 @@ document.addEventListener('touchmove', (e) => {
     const ptrIcon = ptr.querySelector('.icon');
     
     let startY = 0;
-    let currentY = 0;
+    let diffY = 0;
     let isPulling = false;
-    let isAtTop = false;
-    let isAtBottom = false;
-    
-    const threshold = 80; // Pull distance required to trigger refresh
-    const maxPull = 120; // Maximum pull distance
+    const threshold = 70;
 
-    // Check if scrolled to top
-    const checkScrollPosition = () => {
-        const scrollTop = mainContent.scrollTop;
-        const scrollHeight = mainContent.scrollHeight;
-        const clientHeight = mainContent.clientHeight;
-        
-        isAtTop = scrollTop === 0;
-        isAtBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 2;
-        
-        return { isAtTop, isAtBottom };
-    };
+    const isScrolledToTop = () => {
+    return mainContent.scrollTop === 0; // শুধুমাত্র সম্পূর্ণ উপরে থাকলে true রিটার্ন করবে
+};
 
-    // Reset PTR to hidden state
     const resetPtr = () => {
-        ptr.style.transition = 'transform 0.3s ease-out';
-        ptr.style.transform = 'translateY(-60px)';
+        ptr.style.transition = 'transform 0.3s';
+        ptr.style.transform = 'translateY(0)';
         ptr.classList.remove('refreshing', 'ready');
+        ptrIcon.style.transform = 'rotate(0deg)';
         ptrIcon.innerHTML = `<i data-lucide="arrow-down"></i>`;
         lucide.createIcons();
         
@@ -3867,71 +3771,41 @@ document.addEventListener('touchmove', (e) => {
         }, 300);
     };
 
-    // Initialize PTR position (hidden)
-    resetPtr();
-
-    mainContent.addEventListener('scroll', () => {
-        checkScrollPosition();
-    });
-
     mainContent.addEventListener('touchstart', (e) => {
-        // Only activate if at the very top or bottom
-        const { isAtTop, isAtBottom } = checkScrollPosition();
-        
-        if (isAtTop || isAtBottom) {
+        // শুধুমাত্র যখন কন্টেন্ট একদম উপরে থাকে তখনই পুল টু রিফ্রেশ শুরু হবে
+        if (isScrolledToTop()) {
             startY = e.touches[0].pageY;
-            currentY = startY;
             isPulling = true;
             ptr.style.transition = '';
         }
     }, { passive: true });
 
     mainContent.addEventListener('touchmove', (e) => {
-        if (!isPulling) return;
+        // শুধুমাত্র পুল টু রিফ্রেশ সক্রিয় থাকলে এবং উপরে স্ক্রল করা থাকলে প্রক্রিয়া করুন
+        if (!isPulling || !isScrolledToTop()) return;
 
-        currentY = e.touches[0].pageY;
-        const diffY = currentY - startY;
+        const currentY = e.touches[0].pageY;
+        diffY = currentY - startY;
 
-        // Determine pull direction and validity
-        const { isAtTop, isAtBottom } = checkScrollPosition();
-        const isPullDown = diffY > 0 && isAtTop;
-        const isPullUp = diffY < 0 && isAtBottom;
-
-        if (!isPullDown && !isPullUp) {
-            // Not a valid pull for refresh, cancel
-            isPulling = false;
-            resetPtr();
-            return;
-        }
-
-        // Calculate effective pull distance with resistance
-        const effectivePull = Math.min(Math.abs(diffY) * 0.6, maxPull);
-        
-        if (isPullDown) {
-            // Pull down from top
-            ptr.style.transform = `translateY(${effectivePull - 60}px)`;
-            ptrIcon.style.transform = `rotate(${effectivePull * 2}deg)`;
+        // শুধুমাত্র নিচের দিকে টান দিলে (ধনাত্মক diffY) প্রক্রিয়া করুন
+        if (diffY > 0) {
+            e.preventDefault();
+            ptr.style.transform = `translateY(${diffY}px)`;
+            ptrIcon.style.transform = `rotate(${diffY * 2}deg)`;
             
-            if (effectivePull > threshold && !ptr.classList.contains('ready')) {
+            if (diffY > threshold && !ptr.classList.contains('ready')) {
                 ptr.classList.add('ready');
                 ptrIcon.innerHTML = `<i data-lucide="arrow-up"></i>`;
                 lucide.createIcons();
-            } else if (effectivePull <= threshold && ptr.classList.contains('ready')) {
+            } else if (diffY <= threshold && ptr.classList.contains('ready')) {
                 ptr.classList.remove('ready');
                 ptrIcon.innerHTML = `<i data-lucide="arrow-down"></i>`;
                 lucide.createIcons();
             }
-        } else if (isPullUp) {
-            // Pull up from bottom (optional - you can enable/disable this)
-            // Currently disabled to avoid confusion
+        } else {
+            // উপরের দিকে টান দিলে পুল টু রিফ্রেশ বন্ধ করুন
             isPulling = false;
             resetPtr();
-            return;
-        }
-
-        // Only prevent default when we're actively pulling to refresh beyond a small threshold
-        if (Math.abs(diffY) > 10) {
-            e.preventDefault();
         }
     }, { passive: false });
 
@@ -3939,39 +3813,17 @@ document.addEventListener('touchmove', (e) => {
         if (!isPulling) return;
         
         isPulling = false;
-        const diffY = currentY - startY;
-        const { isAtTop, isAtBottom } = checkScrollPosition();
         
-        const isPullDown = diffY > 0 && isAtTop;
-        const effectivePull = Math.min(Math.abs(diffY) * 0.6, maxPull);
+        if (diffY > threshold) {
+            showToast('ডেটা রিফ্রেশ হচ্ছে...');
+            ptr.classList.add('refreshing');
+            ptr.style.transition = 'transform 0.3s';
+            ptr.style.transform = 'translateY(50px)';
+            ptrIcon.style.transform = 'rotate(0deg)';
+            ptrIcon.innerHTML = `<i data-lucide="loader-circle"></i>`;
+            lucide.createIcons();
 
-        if (isPullDown && effectivePull > threshold) {
-            // Trigger refresh from top
-            triggerRefresh();
-        } else {
-            // Reset if not pulled enough
-            resetPtr();
-        }
-    });
-
-    mainContent.addEventListener('touchcancel', () => {
-        if (isPulling) {
-            isPulling = false;
-            resetPtr();
-        }
-    });
-
-    const triggerRefresh = () => {
-        showToast('ডেটা রিফ্রেশ হচ্ছে...');
-        ptr.classList.add('refreshing');
-        ptr.style.transition = 'transform 0.3s';
-        ptr.style.transform = 'translateY(0px)';
-        ptrIcon.style.transform = 'rotate(0deg)';
-        ptrIcon.innerHTML = `<i data-lucide="loader-circle"></i>`;
-        lucide.createIcons();
-
-        // Clear cache and reload data
-        setTimeout(() => {
+            // Clear cache and reload data
             Object.keys(localStorage).forEach(key => {
                 if (key.startsWith(LS_PREFIX)) {
                     localStorage.removeItem(key);
@@ -3984,12 +3836,22 @@ document.addEventListener('touchmove', (e) => {
             setTimeout(() => {
                 resetPtr();
                 showToast('ডেটা সফলভাবে রিফ্রেশ হয়েছে!', false);
-            }, 1000);
-        }, 500);
-    };
+            }, 1500);
 
-    // Initial scroll position check
-    checkScrollPosition();
+        } else {
+            resetPtr();
+        }
+
+        diffY = 0;
+    });
+
+    // স্ক্রল ইভেন্ট যোগ করুন - স্ক্রল করার সময় পুল টু রিফ্রেশ রিসেট করুন
+    mainContent.addEventListener('scroll', () => {
+        if (!isScrolledToTop() && isPulling) {
+            isPulling = false;
+            resetPtr();
+        }
+    });
 };
     // সুপার অ্যাডমিন তৈরি করার ফাংশন
 const createSuperAdmin = async (email, password) => {
