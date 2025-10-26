@@ -403,6 +403,65 @@ header .container {
     }
 }
 
+/* Contributor Card Professional Styling */
+.contributor-card {
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+    border: 1px solid rgba(245, 158, 11, 0.1);
+    transition: all 0.3s ease-in-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.contributor-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.05), transparent);
+    transition: left 0.5s;
+}
+
+.contributor-card:hover::before {
+    left: 100%;
+}
+
+.contributor-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.donation-amount {
+    background: linear-gradient(135deg, #10b981, #34d399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: bold;
+}
+
+.total-donation-summary {
+    background: linear-gradient(135deg, #1f2937, #374151);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+}
+
+.total-donation-summary .amount {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #10b981;
+}
+
+.contributor-name {
+    font-weight: bold;
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
 </style>
     
     
@@ -518,7 +577,7 @@ header .container {
             <!-- Fund Page -->
             <div id="fund-page" class="tab-content hidden">
                 <div class="flex justify-center border-b border-gray-700 mb-6">
-                    <button data-subtab="all-contributors" class="fund-subtab nav-tab py-2 px-4 sm:px-6 text-sm sm:text-base active">সকল দাতা</button>
+                    <button data-subtab="all-contributors" class="fund-subtab nav-tab py-2 px-4 sm:px-6 text-sm sm:text-base active">সাধারন দান ফান্ড</button>
                     <button data-subtab="zakat-fund" class="fund-subtab nav-tab py-2 px-4 sm:px-6 text-sm sm:text-base">যাকাত ফান্ড</button>
                     <button data-subtab="events" class="fund-subtab nav-tab py-2 px-4 sm:px-6 text-sm sm:text-base">ইভেন্ট</button>
                     <button data-subtab="expense" class="fund-subtab nav-tab py-2 px-4 sm:px-6 text-sm sm:text-base">ব্যয়ের খাতা</button>
@@ -526,7 +585,7 @@ header .container {
                 
                 <div id="all-contributors-subpage" class="fund-subcontent active-subcontent">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-                        <h2 class="text-2xl font-bold">সকল আর্থিক দাতার তালিকা</h2>
+                        <h2 class="text-2xl font-bold">সাধান দান ফান্ড আর্থিক দাতার তালিকা</h2>
                         <button id="add-contributor-btn" class="admin-only bg-accent text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-amber-600 w-full sm:w-auto"><i data-lucide="plus-circle" class="w-5 h-5"></i> নতুন দাতা</button>
                     </div>
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -896,9 +955,17 @@ const advancedSearch = (items, searchTerm, searchFields) => {
 
         const formatCurrency = (amount) => `৳ ${new Intl.NumberFormat('bn-BD').format(amount || 0)}`;
         const formatDate = (timestamp) => {
-    if (!timestamp || !timestamp.seconds) return 'N/A';
+    if (!timestamp) return 'N/A';
     
-    const date = new Date(timestamp.seconds * 1000);
+    let date;
+    if (timestamp instanceof Date) {
+        date = timestamp;
+    } else if (timestamp.seconds) {
+        date = new Date(timestamp.seconds * 1000);
+    } else {
+        return 'N/A';
+    }
+    
     return date.toLocaleDateString('bn-BD', {
         day: 'numeric',
         month: 'short',
@@ -906,6 +973,17 @@ const advancedSearch = (items, searchTerm, searchFields) => {
     });
 };
         const dateToInputFormat = (date) => date ? new Date(date.seconds * 1000).toISOString().split('T')[0] : '';
+
+
+        const getNextDonationDate = (lastDonation) => {
+    if (!lastDonation || !lastDonation.seconds) return null;
+    
+    const lastDonationDate = new Date(lastDonation.seconds * 1000);
+    const nextDonationDate = new Date(lastDonationDate);
+    nextDonationDate.setMonth(nextDonationDate.getMonth() + 4);
+    
+    return nextDonationDate;
+};
 
         // নতুন আপডেটেড কোড
 const createModal = (title, content, footer) => {
@@ -1325,23 +1403,66 @@ const loadBikashNumber = (fromCacheOnly = false) => {
             if (currentBalanceEl) currentBalanceEl.textContent = formatCurrency(totalIncome - totalExpense);
         };
 
+        // ক্যাটাগরি অনুযায়ী ব্যয় আপডেট করার ফাংশন
+const updateCategoryWiseExpenses = () => {
+    // contributors এর জন্য মোট ব্যয়
+    let contributorExpenses = 0;
+    allExpenses.forEach(expense => {
+        if (expense.category && expense.category.type === 'contributor') {
+            contributorExpenses += expense.amount;
+        }
+    });
+
+    // zakat contributors এর জন্য মোট ব্যয়
+    let zakatExpenses = 0;
+    allExpenses.forEach(expense => {
+        if (expense.category && expense.category.type === 'zakat') {
+            zakatExpenses += expense.amount;
+        }
+    });
+
+    // events এর জন্য মোট ব্যয়
+    let eventExpenses = 0;
+    allExpenses.forEach(expense => {
+        if (expense.category && expense.category.type === 'event') {
+            eventExpenses += expense.amount;
+        }
+    });
+
+    // সাধারণ ব্যয়
+    let generalExpenses = 0;
+    allExpenses.forEach(expense => {
+        if (!expense.category || expense.category.type === 'general') {
+            generalExpenses += expense.amount;
+        }
+    });
+
+    // আপনি চাইলে এই ভ্যালুগুলো কোন এলিমেন্টে দেখাতে পারেন
+    console.log('Contributor Expenses:', contributorExpenses);
+    console.log('Zakat Expenses:', zakatExpenses);
+    console.log('Event Expenses:', eventExpenses);
+    console.log('General Expenses:', generalExpenses);
+};
+
         const renderContributorsGeneric = (contributors, listElId, counterElId, detailsModalFn, isZakat = false) => {
     const listEl = document.getElementById(listElId);
     const counterEl = document.getElementById(counterElId);
     if (!listEl || !counterEl) return;
 
-    counterEl.textContent = `মোট দাতা: ${new Intl.NumberFormat('bn-BD').format(contributors.length)} জন`;
+    // মোট দাতা সংখ্যা এবং সর্বমোট অনুদান গণনা
+    const totalDonors = contributors.length;
+    const totalDonation = contributors.reduce((sum, contributor) => sum + (contributor.totalDonation || 0), 0);
+
+    counterEl.innerHTML = `
+        <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+            <span class="text-gray-400 font-semibold">মোট দাতা: ${new Intl.NumberFormat('bn-BD').format(totalDonors)} জন</span>
+            <span class="text-green-400 font-bold text-lg">সর্বমোট অনুদান: ${formatCurrency(totalDonation)}</span>
+        </div>
+    `;
 
     if (contributors.length === 0) {
-        listEl.innerHTML = `<p class="col-span-full text-center text-gray-400">কোনো দাতার তথ্য পাওয়া যায়নি।</p>`;
+        listEl.innerHTML = `<p class="col-span-full text-center text-gray-400 py-8">কোনো দাতার তথ্য পাওয়া যায়নি।</p>`;
         return;
-    }
-
-    // Coordinator এর জন্য Fund page-এ বাটন লুকানো
-    if (isCoordinator) {
-        card.querySelectorAll('.admin-actions').forEach(action => {
-            action.style.display = 'none';
-        });
     }
 
     listEl.innerHTML = '';
@@ -1354,14 +1475,24 @@ const loadBikashNumber = (fromCacheOnly = false) => {
         mainContent.dataset.id = contributor.id;
         mainContent.dataset.isZakat = isZakat;
         mainContent.innerHTML = `
-            <h3 class="text-xl font-bold accent-color">${contributor.name}</h3>
-            <p class="text-gray-400">${contributor.address || ''}</p>
+            <div class="flex justify-between items-start mb-3">
+                <h3 class="text-xl font-bold accent-color flex-1">${contributor.name}</h3>
+                <div class="text-right">
+                    <div class="text-green-400 font-bold text-lg">${formatCurrency(contributor.totalDonation)}</div>
+                    <div class="text-xs text-gray-400">সর্বমোট অনুদান</div>
+                </div>
+            </div>
+            <p class="text-gray-400 text-sm mb-2">${contributor.fatherName ? `পিতা: ${contributor.fatherName}` : ''}</p>
+            <p class="text-gray-400 text-sm">${contributor.address || ''}</p>
         `;
         
         const footerContent = document.createElement('div');
         footerContent.className = 'flex justify-between items-center mt-3 pt-3 border-t border-gray-600/50';
         footerContent.innerHTML = `
-            <p class="text-lg font-semibold">মোট অনুদান: ${formatCurrency(contributor.totalDonation)}</p>
+            <div class="flex items-center gap-2 text-sm text-gray-400">
+                <i data-lucide="calendar" class="w-4 h-4"></i>
+                <span>শেষ হালনাগাদ: ${contributor.lastDonationDate ? formatDate(contributor.lastDonationDate) : 'N/A'}</span>
+            </div>
             <div class="admin-actions flex items-center gap-2" style="display: none;">
                 <button class="edit-contributor-btn edit-only text-blue-400 hover:text-blue-300 p-1" data-id="${contributor.id}" data-is-zakat="${isZakat}" style="display: none;">
                     <i data-lucide="edit" class="w-5 h-5"></i>
@@ -1380,6 +1511,12 @@ const loadBikashNumber = (fromCacheOnly = false) => {
     updateUIVisibility();
 };
 
+// Coordinator এর জন্য Fund page-এ বাটন লুকানো
+    if (isCoordinator) {
+        card.querySelectorAll('.admin-actions').forEach(action => {
+            action.style.display = 'none';
+        });
+    }
         const renderContributors = (contributors) => renderContributorsGeneric(contributors, 'contributors-list', 'contributor-counter', showContributorDetailsModal, false);
         const renderZakatContributors = (contributors) => renderContributorsGeneric(contributors, 'zakat-contributors-list', 'zakat-contributor-counter', showZakatContributorDetailsModal, true);
 
@@ -1399,6 +1536,13 @@ const loadBikashNumber = (fromCacheOnly = false) => {
             const donationsSnapshot = await getDocs(collection(db, `contributors/${contributor.id}/donations`));
             contributor.donations = donationsSnapshot.docs.map(d => ({id: d.id, ...d.data()}));
             contributor.totalDonation = contributor.donations.reduce((sum, d) => sum + d.amount, 0);
+            
+            // সর্বশেষ অনুদানের তারিখ যোগ করুন
+            if (contributor.donations.length > 0) {
+                const sortedDonations = contributor.donations.sort((a, b) => b.date.seconds - a.date.seconds);
+                contributor.lastDonationDate = sortedDonations[0].date;
+            }
+            
             return contributor;
         }));
         allContributors = contributorsWithData;
@@ -1424,6 +1568,13 @@ const loadZakatContributors = (fromCacheOnly = false) => {
             const donationsSnapshot = await getDocs(collection(db, `zakat_contributors/${contributor.id}/donations`));
             contributor.donations = donationsSnapshot.docs.map(d => ({id: d.id, ...d.data()}));
             contributor.totalDonation = contributor.donations.reduce((sum, d) => sum + d.amount, 0);
+            
+            // সর্বশেষ অনুদানের তারিখ যোগ করুন
+            if (contributor.donations.length > 0) {
+                const sortedDonations = contributor.donations.sort((a, b) => b.date.seconds - a.date.seconds);
+                contributor.lastDonationDate = sortedDonations[0].date;
+            }
+            
             return contributor;
         }));
         allZakatContributors = contributorsWithData;
@@ -1435,46 +1586,70 @@ const loadZakatContributors = (fromCacheOnly = false) => {
 
 
         const renderExpenses = (expenses) => {
-            const expenseContainer = document.getElementById('expenses-list-container');
-            if(!expenseContainer) return;
-            if (expenses.length === 0) { 
-                expenseContainer.innerHTML = `<p class="text-center p-4 text-gray-400">কোনো ব্যয়ের হিসাব পাওয়া যায়নি।</p>`; 
-                return; 
-            }
+    const expenseContainer = document.getElementById('expenses-list-container');
+    if(!expenseContainer) return;
+    if (expenses.length === 0) { 
+        expenseContainer.innerHTML = `<p class="text-center p-4 text-gray-400">কোনো ব্যয়ের হিসাব পাওয়া যায়নি।</p>`; 
+        return; 
+    }
 
-             // Coordinator এর জন্য Fund page-এ বাটন লুকানো
+    expenseContainer.innerHTML = '';
+    expenses.forEach(expense => {
+        // ক্যাটাগরি লেবেল তৈরি করুন
+        let categoryLabel = '';
+        if (expense.category) {
+            switch(expense.category.type) {
+                case 'contributor':
+                    const contributor = allContributors.find(c => c.id === expense.category.id);
+                    categoryLabel = contributor ? `<span class="text-xs bg-blue-500 text-white px-2 py-1 rounded ml-2">দাতা: ${contributor.name}</span>` : '';
+                    break;
+                case 'zakat':
+                    const zakatContributor = allZakatContributors.find(z => z.id === expense.category.id);
+                    categoryLabel = zakatContributor ? `<span class="text-xs bg-green-500 text-white px-2 py-1 rounded ml-2">যাকাত: ${zakatContributor.name}</span>` : '';
+                    break;
+                case 'event':
+                    const event = allEvents.find(e => e.id === expense.category.id);
+                    categoryLabel = event ? `<span class="text-xs bg-purple-500 text-white px-2 py-1 rounded ml-2">ইভেন্ট: ${event.name}</span>` : '';
+                    break;
+                default:
+                    categoryLabel = '<span class="text-xs bg-gray-500 text-white px-2 py-1 rounded ml-2">সাধারণ</span>';
+            }
+        }
+
+        const card = document.createElement('div');
+        card.className = 'bg-card-light p-4 rounded-lg shadow-md hover:shadow-lg hover:border-accent border border-transparent transition-all cursor-pointer view-expense-details-btn';
+        card.dataset.id = expense.id;
+        
+        card.innerHTML = `
+            <div class="flex justify-between items-center">
+                <div class="flex-grow pr-4">
+                    <div class="flex items-center">
+                        <p class="font-bold text-lg text-gray-200">${expense.description}</p>
+                        ${categoryLabel}
+                    </div>
+                    <p class="text-sm text-gray-400">${formatDate(expense.date)}</p>
+                </div>
+                <div class="flex items-center flex-shrink-0">
+                    <p class="text-xl font-bold text-red-500 mr-4">${formatCurrency(expense.amount)}</p>
+                    <button class="admin-only text-red-500 hover:text-red-400 p-1 delete-expense-btn" data-id="${expense.id}">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-2 non-admin-only" style="display: none;">বিস্তারিত দেখতে ক্লিক করুন</p>
+        `;
+        expenseContainer.appendChild(card);
+    });
+    lucide.createIcons();
+    updateUIVisibility();
+};
+
+        // Coordinator এর জন্য Fund page-এ বাটন লুকানো
     if (isCoordinator) {
         card.querySelectorAll('.admin-only').forEach(action => {
             action.style.display = 'none';
         });
     }
-
-            expenseContainer.innerHTML = '';
-            expenses.forEach(expense => {
-                const card = document.createElement('div');
-                card.className = 'bg-card-light p-4 rounded-lg shadow-md hover:shadow-lg hover:border-accent border border-transparent transition-all cursor-pointer view-expense-details-btn';
-                card.dataset.id = expense.id;
-                
-                card.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <div class="flex-grow pr-4">
-                            <p class="font-bold text-lg text-gray-200">${expense.description}</p>
-                            <p class="text-sm text-gray-400">${formatDate(expense.date)}</p>
-                        </div>
-                        <div class="flex items-center flex-shrink-0">
-                            <p class="text-xl font-bold text-red-500 mr-4">${formatCurrency(expense.amount)}</p>
-                            <button class="admin-only text-red-500 hover:text-red-400 p-1 delete-expense-btn" data-id="${expense.id}">
-                                <i data-lucide="trash-2" class="w-5 h-5"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-2 non-admin-only" style="display: none;">বিস্তারিত দেখতে ক্লিক করুন</p>
-                `;
-                expenseContainer.appendChild(card);
-            });
-            lucide.createIcons();
-            updateUIVisibility();
-        };
 
         const loadExpenses = (fromCacheOnly = false) => {
     const cachedData = loadFromLocalStorage('expenses');
@@ -1727,11 +1902,40 @@ const loadZakatContributors = (fromCacheOnly = false) => {
 
        const showExpenseFormModal = () => {
     detailedExpenses = []; // Reset details
+    
+    // ক্যাটাগরি অপশন তৈরি করুন
+    let categoryOptions = '<option value="">ক্যাটাগরি নির্বাচন করুন (ঐচ্ছিক)</option>';
+    categoryOptions += '<option value="general">সাধারণ ব্যয়</option>';
+    
+    // সাধারন দান ফান্ড (contributors) যোগ করুন
+    allContributors.forEach(contributor => {
+        categoryOptions += `<option value="contributor_${contributor.id}">দাতা: ${contributor.name}</option>`;
+    });
+    
+    // যাকাত ফান্ড দাতা যোগ করুন
+    allZakatContributors.forEach(contributor => {
+        categoryOptions += `<option value="zakat_${contributor.id}">যাকাত দাতা: ${contributor.name}</option>`;
+    });
+    
+    // ইভেন্ট যোগ করুন
+    allEvents.forEach(event => {
+        categoryOptions += `<option value="event_${event.id}">ইভেন্ট: ${event.name}</option>`;
+    });
+
     const content = `
         <form id="expense-form" class="space-y-4" onsubmit="return false;">
             <input type="text" id="description" placeholder="বিবরণ" class="w-full bg-card-light p-3 rounded-lg" required>
             <input type="tel" id="phone" placeholder="ফোন নম্বর (ঐচ্ছিক)" class="w-full bg-card-light p-3 rounded-lg">
             <input type="date" id="date" class="w-full bg-card-light p-3 rounded-lg" value="${new Date().toISOString().split('T')[0]}" required>
+            
+            <!-- ক্যাটাগরি সিলেক্ট -->
+            <div>
+                <label for="expense-category" class="block mb-2 text-sm font-medium text-gray-300">ক্যাটাগরি (ঐচ্ছিক)</label>
+                <select id="expense-category" class="w-full bg-card-light p-3 rounded-lg border border-gray-600 focus:border-accent focus:outline-none">
+                    ${categoryOptions}
+                </select>
+            </div>
+
             <div class="bg-card-light p-4 rounded-lg">
                 <h4 class="text-lg font-semibold mb-2">বিস্তারিত ব্যয়</h4>
                 <div id="detailed-expenses-list" class="space-y-2 mb-3"></div>
@@ -1835,12 +2039,33 @@ const loadZakatContributors = (fromCacheOnly = false) => {
         }
 
         const totalAmount = detailedExpenses.reduce((sum, item) => sum + item.price, 0);
+        const categoryValue = form.querySelector('#expense-category').value;
+
+        // ক্যাটাগরি ডাটা প্রস্তুত করুন
+        let categoryData = {
+            type: 'general', // ডিফল্ট
+            id: null
+        };
+
+        if (categoryValue) {
+            if (categoryValue.startsWith('contributor_')) {
+                categoryData.type = 'contributor';
+                categoryData.id = categoryValue.replace('contributor_', '');
+            } else if (categoryValue.startsWith('zakat_')) {
+                categoryData.type = 'zakat';
+                categoryData.id = categoryValue.replace('zakat_', '');
+            } else if (categoryValue.startsWith('event_')) {
+                categoryData.type = 'event';
+                categoryData.id = categoryValue.replace('event_', '');
+            }
+        }
 
         const data = {
             description: form.description.value,
             amount: totalAmount,
             date: Timestamp.fromDate(new Date(form.date.value)),
-            phone: form.phone.value || null
+            phone: form.phone.value || null,
+            category: categoryData
         };
 
         try {
@@ -1872,6 +2097,27 @@ window.viewExpenseDetails = (expenseId) => {
     }
     const details = expense.details || [];
 
+    // ক্যাটাগরি তথ্য দেখানোর জন্য
+    let categoryInfo = '';
+    if (expense.category) {
+        switch(expense.category.type) {
+            case 'contributor':
+                const contributor = allContributors.find(c => c.id === expense.category.id);
+                categoryInfo = contributor ? `<p><strong>ক্যাটাগরি:</strong> দাতা - ${contributor.name}</p>` : '';
+                break;
+            case 'zakat':
+                const zakatContributor = allZakatContributors.find(z => z.id === expense.category.id);
+                categoryInfo = zakatContributor ? `<p><strong>ক্যাটাগরি:</strong> যাকাত দাতা - ${zakatContributor.name}</p>` : '';
+                break;
+            case 'event':
+                const event = allEvents.find(e => e.id === expense.category.id);
+                categoryInfo = event ? `<p><strong>ক্যাটাগরি:</strong> ইভেন্ট - ${event.name}</p>` : '';
+                break;
+            default:
+                categoryInfo = '<p><strong>ক্যাটাগরি:</strong> সাধারণ ব্যয়</p>';
+        }
+    }
+
     let detailsHtml = '<p>কোনো বিস্তারিত বিবরণ নেই।</p>';
     if (details.length > 0) {
         detailsHtml = `<table class="w-full text-left mt-2">
@@ -1889,7 +2135,6 @@ window.viewExpenseDetails = (expenseId) => {
         </table>`;
     }
     
-    // === পরিবর্তিত রেসপন্সিভ লেআউট ===
     const addNewDetailForm = `
         <div class="admin-only mt-4 pt-4 border-t border-gray-600" style="display:none;">
             <h5 class="font-bold text-md mb-2">নতুন বিস্তারিত যোগ করুন</h5>
@@ -1904,6 +2149,7 @@ window.viewExpenseDetails = (expenseId) => {
     const content = `
         <div class="space-y-2">
             <p><strong>বিবরণ:</strong> ${expense.description}</p>
+            ${categoryInfo}
             <p><strong>তারিখ:</strong> ${formatDate(expense.date)}</p>
             <p><strong>মোট ব্যয়:</strong> ${formatCurrency(expense.amount)}</p>
             ${expense.phone ? `<p><strong>ফোন:</strong> ${expense.phone}</p>` : ''}
@@ -2015,6 +2261,13 @@ window.deleteExpenseDetail = (expenseId, detailId) => {
                 const donationsSnapshot = await getDocs(collection(db, `events/${event.id}/donors/${donorDoc.id}/donations`));
                 donorData.donations = donationsSnapshot.docs.map(d => ({id: d.id, ...d.data()}));
                 donorData.totalDonation = donorData.donations.reduce((sum, d) => sum + d.amount, 0);
+                
+                // সর্বশেষ অনুদানের তারিখ যোগ করুন
+                if (donorData.donations.length > 0) {
+                    const sortedDonations = donorData.donations.sort((a, b) => b.date.seconds - a.date.seconds);
+                    donorData.lastDonationDate = sortedDonations[0].date;
+                }
+                
                 return donorData;
             }));
             
@@ -2110,7 +2363,7 @@ window.deleteExpenseDetail = (expenseId, detailId) => {
         };
 
         window.deleteEvent = (eventId) => {
-            showConfirmModal('নিশ্চিতকরণ', 'এই ইভেন্টটি মুছে ফেললে এর সাথে সম্পর্কিত সকল দাতা এবং তাদের অনুদানের হিসাবও মুছে যাবে। আপনি কি নিশ্চিত?', async () => {
+            showConfirmModal('নিশ্চিতকরণ', 'এই ইভেন্টটি মুছে ফেললে এর সাথে সম্পর্কিত সাধারন দান ফান্ড এবং তাদের অনুদানের হিসাবও মুছে যাবে। আপনি কি নিশ্চিত?', async () => {
                 showToast('ইভেন্ট মুছে ফেলা হচ্ছে...');
                 try {
                     const batch = writeBatch(db);
@@ -2240,26 +2493,52 @@ window.deleteExpenseDetail = (expenseId, detailId) => {
 };
         
         const renderEventDonors = (eventId, donors) => {
-            const listEl = document.getElementById('event-donors-list');
-            const counterEl = document.getElementById('event-donor-counter');
-            if(!listEl || !counterEl) return;
+    const listEl = document.getElementById('event-donors-list');
+    const counterEl = document.getElementById('event-donor-counter');
+    if(!listEl || !counterEl) return;
 
-            counterEl.textContent = `মোট দাতা: ${new Intl.NumberFormat('bn-BD').format(donors.length)} জন`;
+    // মোট দাতা সংখ্যা এবং সর্বমোট অনুদান গণনা
+    const totalDonors = donors.length;
+    const totalDonation = donors.reduce((sum, donor) => sum + (donor.totalDonation || 0), 0);
 
-            if (donors.length === 0) {
-                listEl.innerHTML = `<p class="col-span-full text-center text-gray-400">এই ইভেন্টে কোনো দাতার তথ্য পাওয়া যায়নি।</p>`;
-                return;
-            }
-            listEl.innerHTML = '';
-            donors.forEach(donor => {
-                const card = document.createElement('div');
-                card.className = 'bg-card-light p-4 rounded-lg shadow hover:shadow-lg hover:border-accent border border-transparent transition-all cursor-pointer event-donor-details-link';
-                card.dataset.eventId = eventId;
-                card.dataset.donorId = donor.id;
-                card.innerHTML = `<h3 class="text-xl font-bold accent-color">${donor.name}</h3><p class="text-gray-400">${donor.address || ''}</p><p class="mt-2 text-lg font-semibold">মোট অনুদান: ${formatCurrency(donor.totalDonation)}</p>`;
-                listEl.appendChild(card);
-            });
-        };
+    counterEl.innerHTML = `
+        <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+            <span class="text-gray-400 font-semibold">মোট দাতা: ${new Intl.NumberFormat('bn-BD').format(totalDonors)} জন</span>
+            <span class="text-green-400 font-bold text-lg">সর্বমোট অনুদান: ${formatCurrency(totalDonation)}</span>
+        </div>
+    `;
+
+    if (donors.length === 0) {
+        listEl.innerHTML = `<p class="col-span-full text-center text-gray-400 py-8">এই ইভেন্টে কোনো দাতার তথ্য পাওয়া যায়নি।</p>`;
+        return;
+    }
+
+    listEl.innerHTML = '';
+    donors.forEach(donor => {
+        const card = document.createElement('div');
+        card.className = 'bg-card-light p-4 rounded-lg shadow hover:shadow-lg hover:border-accent border border-transparent transition-all cursor-pointer event-donor-details-link contributor-card';
+        card.dataset.eventId = eventId;
+        card.dataset.donorId = donor.id;
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-3">
+                <h3 class="text-xl font-bold accent-color flex-1 contributor-name">${donor.name}</h3>
+                <div class="text-right">
+                    <div class="text-green-400 font-bold text-lg donation-amount">${formatCurrency(donor.totalDonation)}</div>
+                    <div class="text-xs text-gray-400">সর্বমোট অনুদান</div>
+                </div>
+            </div>
+            <p class="text-gray-400 text-sm mb-2">${donor.fatherName ? `পিতা: ${donor.fatherName}` : ''}</p>
+            <p class="text-gray-400 text-sm">${donor.address || ''}</p>
+            ${donor.phone ? `<p class="text-gray-400 text-sm mt-1">${donor.phone}</p>` : ''}
+            <div class="flex items-center gap-2 text-sm text-gray-400 mt-2">
+                <i data-lucide="calendar" class="w-4 h-4"></i>
+                <span>শেষ অনুদান: ${donor.lastDonationDate ? formatDate(donor.lastDonationDate) : 'N/A'}</span>
+            </div>
+        `;
+        listEl.appendChild(card);
+    });
+    lucide.createIcons();
+};
 
         const showEventDonorFormModal = (eventId, donorId = null) => {
             let existingData = {};
@@ -2427,7 +2706,7 @@ window.deleteExpenseDetail = (expenseId, detailId) => {
     }, (error) => console.error("Error loading coordinators:", error.message));
 };
 
-        const renderBloodDonors = (donors) => {
+       const renderBloodDonors = (donors) => {
     const listEl = document.getElementById('blood-donors-list');
     const counterEl = document.getElementById('blood-donor-counter');
     if(!listEl || !counterEl) return;
@@ -2459,10 +2738,15 @@ window.deleteExpenseDetail = (expenseId, detailId) => {
         card.className = 'donor-card bg-card p-4 rounded-lg shadow text-center cursor-pointer';
         card.dataset.id = donor.id;
         
-        // এলিজিবিলিটি চেক
+        // এলিজিবিলিটি চেক - IMPROVED LOGIC
         let eligibility = 'unknown-eligibility';
         let eligibilityText = 'তথ্য নেই';
-        
+        let nextDate = '';
+
+        // পরবর্তী রক্তদানের তারিখ ক্যালকুলেশন
+        const nextDonationDate = getNextDonationDate(donor.lastDonation);
+        const nextDateDisplay = nextDonationDate ? formatDate(nextDonationDate) : 'N/A';
+
         if (donor.dob) {
             const dobDate = new Date(donor.dob.seconds * 1000);
             const today = new Date();
@@ -2486,6 +2770,23 @@ window.deleteExpenseDetail = (expenseId, detailId) => {
                     eligibility = 'eligible';
                     eligibilityText = 'রক্তদানে প্রস্তুত';
                 }
+            }
+        } else {
+            // যদি জন্মতারিখ না থাকে, শুধু শেষ রক্তদানের তারিখ দেখবে
+            if (donor.lastDonation) {
+                const lastDonationDate = new Date(donor.lastDonation.seconds * 1000);
+                const nextDonationDate = new Date(new Date(lastDonationDate).setMonth(lastDonationDate.getMonth() + 4));
+                if (new Date() > nextDonationDate) {
+                    eligibility = 'eligible';
+                    eligibilityText = 'রক্তদানে প্রস্তুত';
+                } else {
+                    eligibility = 'not-eligible';
+                    eligibilityText = 'এখন প্রস্তুত নন';
+                }
+            } else {
+                // জন্মতারিখ ও শেষ রক্তদানের তারিখ কোনটাই না থাকলে
+                eligibility = 'unknown-eligibility';
+                eligibilityText = 'তথ্য নেই';
             }
         }
 
@@ -2543,13 +2844,25 @@ window.deleteExpenseDetail = (expenseId, detailId) => {
             <!-- ফোন নম্বর (শুধুমাত্র এডমিনদের জন্য) -->
             ${phoneHTML}
 
-            <!-- অতিরিক্ত ইনফো (ঐচ্ছিক) -->
-            <div class="mt-3 pt-2 border-t border-gray-600/30 flex justify-between text-xs text-gray-400">
-                <span>${donor.fatherName ? `পিতা: ${donor.fatherName}` : ''}</span>
-                ${donor.lastDonation ? 
-                    `<span>শেষ দান: ${formatDate(donor.lastDonation)}</span>` : 
-                    '<span>নতুন ডোনার</span>'
-                }
+            <!-- অতিরিক্ত ইনফো -->
+            <div class="mt-3 pt-2 border-t border-gray-600/30 space-y-1 text-xs text-gray-400">
+                ${donor.fatherName ? `<div class="text-left">পিতা: ${donor.fatherName}</div>` : ''}
+                
+                <div class="flex justify-between items-center gap-4">
+                    ${donor.lastDonation ? 
+                        `<span>শেষ দান:</span><span>${formatDate(donor.lastDonation)}</span>` : 
+                        '<span class="col-span-2">নতুন ডোনার</span>'
+                    }
+                </div>
+                
+                ${donor.lastDonation ? `
+                    <div class="flex justify-between items-center gap-4">
+                        <span>পরবর্তী দান:</span>
+                        <span class="font-semibold ${new Date() > nextDonationDate ? 'text-green-400' : 'text-yellow-400'}">
+                            ${nextDateDisplay}
+                        </span>
+                    </div>
+                ` : ''}
             </div>
         `;
         
@@ -2662,6 +2975,7 @@ const showDonorDetailsModal = (donorId) => {
     }
 
     // Eligibility calculation
+        // Eligibility calculation - IMPROVED LOGIC
     let eligibility = '<span class="text-yellow-400">তথ্য নেই</span>';
     let nextDate = '';
 
@@ -2690,20 +3004,23 @@ const showDonorDetailsModal = (donorId) => {
             }
         }
     } else {
+        // যদি জন্মতারিখ না থাকে, শুধু শেষ রক্তদানের তারিখ দেখবে
         if (donor.lastDonation) {
-             const lastDonationDate = new Date(donor.lastDonation.seconds * 1000);
-             const nextDonationDate = new Date(new Date(lastDonationDate).setMonth(lastDonationDate.getMonth() + 4));
-             if (new Date() > nextDonationDate) {
-                 eligibility = '<span class="text-green-400 font-bold">রক্তদানে প্রস্তুত</span>';
-             } else {
-                 eligibility = '<span class="text-red-400 font-bold">এখন প্রস্তুত নন</span>';
-                 nextDate = `<p><strong>পরবর্তী সম্ভাব্য তারিখ:</strong> ${nextDonationDate.toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' })}</p>`;
-             }
+            const lastDonationDate = new Date(donor.lastDonation.seconds * 1000);
+            const nextDonationDate = new Date(new Date(lastDonationDate).setMonth(lastDonationDate.getMonth() + 4));
+            if (new Date() > nextDonationDate) {
+                eligibility = '<span class="text-green-400 font-bold">রক্তদানে প্রস্তুত</span>';
+                nextDate = '';
+            } else {
+                eligibility = '<span class="text-red-400 font-bold">এখন প্রস্তুত নন</span>';
+                nextDate = `<p><strong>পরবর্তী সম্ভাব্য তারিখ:</strong> ${nextDonationDate.toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' })}</p>`;
+            }
         } else {
-            eligibility = '<span class="text-green-400 font-bold">রক্তদানে প্রস্তুত</span>';
+            // জন্মতারিখ ও শেষ রক্তদানের তারিখ কোনটাই না থাকলে
+            eligibility = '<span class="text-yellow-400 font-bold">তথ্য নেই</span>';
+            nextDate = '';
         }
     }
-
     // নতুন ট্যাব সিস্টেম
     const content = `
         <div class="space-y-2 mb-4">
@@ -3087,6 +3404,7 @@ const showAddDonationRecordModal = (donorId) => {
         }
 
         try {
+            // প্রথমে রক্তদান রেকর্ড যোগ করুন
             await addDoc(collection(db, `donors/${donorId}/donations`), {
                 date: Timestamp.fromDate(new Date(date)),
                 location: location || null,
@@ -3094,7 +3412,12 @@ const showAddDonationRecordModal = (donorId) => {
                 createdAt: Timestamp.now()
             });
 
-            showToast('রক্তদান রেকর্ড সফলভাবে যোগ হয়েছে!');
+            // তারপর রক্তদাতার শেষ রক্তদানের তারিখ আপডেট করুন
+            await updateDoc(doc(db, 'donors', donorId), {
+                lastDonation: Timestamp.fromDate(new Date(date))
+            });
+
+            showToast('রক্তদান রেকর্ড সফলভাবে যোগ হয়েছে এবং শেষ রক্তদানের তারিখ আপডেট হয়েছে!');
             closeModal();
             loadDonationHistory(donorId);
             
@@ -3148,13 +3471,31 @@ const showEditDonationRecordModal = async (donorId, donationId) => {
             }
 
             try {
+                // প্রথমে রক্তদান রেকর্ড আপডেট করুন
                 await updateDoc(doc(db, `donors/${donorId}/donations`, donationId), {
                     date: Timestamp.fromDate(new Date(date)),
                     location: location || null,
                     notes: notes || null
                 });
 
-                showToast('রেকর্ড সফলভাবে আপডেট হয়েছে!');
+                // তারপর সবচেয়ে সাম্প্রতিক রক্তদানের তারিখ বের করে রক্তদাতার শেষ রক্তদানের তারিখ আপডেট করুন
+                const donationsSnapshot = await getDocs(collection(db, `donors/${donorId}/donations`));
+                let latestDonationDate = null;
+                
+                donationsSnapshot.forEach(doc => {
+                    const donation = doc.data();
+                    if (!latestDonationDate || donation.date.seconds > latestDonationDate.seconds) {
+                        latestDonationDate = donation.date;
+                    }
+                });
+
+                if (latestDonationDate) {
+                    await updateDoc(doc(db, 'donors', donorId), {
+                        lastDonation: latestDonationDate
+                    });
+                }
+
+                showToast('রেকর্ড সফলভাবে আপডেট হয়েছে এবং শেষ রক্তদানের তারিখ আপডেট হয়েছে!');
                 closeModal();
                 loadDonationHistory(donorId);
                 
@@ -3174,8 +3515,26 @@ const showEditDonationRecordModal = async (donorId, donationId) => {
 const deleteDonationRecord = (donorId, donationId) => {
     showConfirmModal('নিশ্চিতকরণ', 'আপনি কি এই রক্তদান রেকর্ডটি মুছে ফেলতে চান?', async () => {
         try {
+            // প্রথমে রক্তদান রেকর্ড মুছুন
             await deleteDoc(doc(db, `donors/${donorId}/donations`, donationId));
-            showToast('রেকর্ড মুছে ফেলা হয়েছে।');
+
+            // তারপর সবচেয়ে সাম্প্রতিক রক্তদানের তারিখ বের করে রক্তদাতার শেষ রক্তদানের তারিখ আপডেট করুন
+            const donationsSnapshot = await getDocs(collection(db, `donors/${donorId}/donations`));
+            let latestDonationDate = null;
+            
+            donationsSnapshot.forEach(doc => {
+                const donation = doc.data();
+                if (!latestDonationDate || donation.date.seconds > latestDonationDate.seconds) {
+                    latestDonationDate = donation.date;
+                }
+            });
+
+            // যদি কোনো রক্তদান রেকর্ড থাকে তবে সর্বশেষ তারিখ সেট করুন, নাহলে null সেট করুন
+            await updateDoc(doc(db, 'donors', donorId), {
+                lastDonation: latestDonationDate
+            });
+
+            showToast('রেকর্ড মুছে ফেলা হয়েছে এবং শেষ রক্তদানের তারিখ আপডেট হয়েছে।');
             loadDonationHistory(donorId);
         } catch (error) {
             showToast('মুছে ফেলতে সমস্যা হয়েছে।', true);
@@ -3932,7 +4291,12 @@ const handleScroll = () => {
             // Use cached data for report generation
             allExpenses.forEach(expense => {
                 if (expense.date >= startTimestamp && expense.date <= endTimestamp) {
-                    expenses.push({ date: formatDate(expense.date), description: expense.description, amount: expense.amount });
+                    expenses.push({ 
+    date: formatDate(expense.date), 
+    description: expense.description, 
+    amount: expense.amount,
+    category: expense.category ? expense.category.type : 'general'
+});
                     totalExpense += expense.amount;
                 }
             });
